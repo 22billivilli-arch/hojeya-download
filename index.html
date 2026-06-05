@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>호제야 다운받자</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
+<style>
+:root {
+  --bg:     #0f0f0f;
+  --bg2:    #161616;
+  --bg3:    #1e1e1e;
+  --bg4:    #272727;
+  --accent: #00d4aa;
+  --accent-dim: rgba(0,212,170,.12);
+  --accent-dim2: rgba(0,212,170,.06);
+  --text:   #e2e2e2;
+  --text2:  #999;
+  --text3:  #555;
+  --border: #2a2a2a;
+  --border2:#383838;
+  --danger: #ff5555;
+  --r:      12px;
+  --r2:     8px;
+  --r3:     6px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
+
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg2);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* ── HEADER ── */
+.header{
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:200;
+  padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;
+}
+.header-title{font-size:18px;font-weight:700;color:var(--accent);letter-spacing:-.5px;}
+.header-notice{font-size:11px;color:var(--text3);white-space:nowrap;}
+
+/* ── TAB NAV ── */
+.tab-nav{
+  display:flex;gap:0;overflow-x:auto;
+  background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px;
+}
+.tab-nav::-webkit-scrollbar{height:0;}
+.tab-btn{
+  padding:10px 18px;background:none;border:none;border-bottom:2px solid transparent;
+  color:var(--text2);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;
+  white-space:nowrap;transition:color .15s,border-color .15s;
+}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
+
+/* ── LAYOUT ── */
+.wrap{padding:20px 16px;max-width:680px;margin:0 auto;}
+
+/* ── CP COMPONENTS ── */
+.cp-tab-wrap{max-width:600px;margin:24px auto;padding:0 8px;}
+.cp-head-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.cp-head-title{font-size:15px;font-weight:600;flex:1;}
+.cp-label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;}
+.cp-input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text);font-family:inherit;font-size:13px;
+  padding:9px 11px;border-radius:var(--r2);outline:none;transition:border-color .2s;
+}
+.cp-input:focus{border-color:var(--accent);}
+.cp-btn{
+  margin-top:12px;width:100%;padding:12px;border:none;border-radius:var(--r2);
+  background:#e52228;color:#fff;font-family:inherit;font-size:14px;font-weight:700;
+  cursor:pointer;transition:opacity .2s;
+}
+.cp-btn:hover{opacity:.85;}
+.cp-btn:disabled{opacity:.5;cursor:not-allowed;}
+.cp-result{
+  margin-top:12px;padding:11px 13px;border-radius:var(--r2);
+  font-size:13px;word-break:break-all;line-height:1.6;
+  border:1px solid var(--border2);background:var(--bg3);color:var(--text);
+}
+.cp-result.err{border-color:var(--danger);background:rgba(255,85,85,.06);color:var(--danger);}
+
+/* ── SPINNER ── */
+.spin{
+  display:inline-block;width:14px;height:14px;
+  border:2px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;
+}
+@keyframes sp{to{transform:rotate(360deg);}}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:22px;right:22px;
+  background:var(--bg3);border:1px solid var(--border2);color:var(--text);
+  padding:9px 16px;border-radius:var(--r2);font-size:12px;z-index:9999;
+  transform:translateY(60px);opacity:0;transition:all .28s;pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.ok{border-color:var(--accent);color:var(--accent);}
+
+/* ── SECTION DIVIDER ── */
+.section-divider{
+  border:none;border-top:1px solid var(--border);
+  margin:28px 0;
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <span class="header-title">📥 호제야 다운받자</span>
+  <span class="header-notice">무단배포 적발시 유료화합니다</span>
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="threads">🧵 Threads</button>
+  <button class="tab-btn" data-tab="tiktok">🎵 TikTok</button>
+</nav>
+
+<div class="wrap">
+
+  <!-- ── Threads 탭 ── -->
+  <div id="tab-threads">
+    <div class="cp-tab-wrap">
+      <div class="cp-head-row">
+        <span class="cp-head-title">📥 Threads 미디어 다운로드</span>
+      </div>
+      <div>
+        <div class="cp-label">Threads 게시물 URL</div>
+        <input class="cp-input" id="_vdUrl" type="text"
+          placeholder="https://www.threads.net/@username/post/..."
+          style="font-size:13px;">
+        <button class="cp-btn" id="_vdFetchBtn" style="margin-top:10px;">미디어 가져오기</button>
+        <button class="cp-btn" id="_vdClearBtn"
+          style="margin-top:8px;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);">
+          URL 지우기
+        </button>
+      </div>
+      <div id="_vdItems" style="display:none;margin-top:16px;"></div>
+      <div id="_vdErr" style="display:none;margin-top:12px;" class="cp-result err"></div>
+    </div>
+  </div>
+
+  <!-- ── TikTok 탭 ── -->
+  <div id="tab-tiktok" style="display:none;">
+    <div class="cp-tab-wrap">
+      <div class="cp-head-row">
+        <span class="cp-head-title">🎵 TikTok 영상 다운로드</span>
+      </div>
+      <div>
+        <div class="cp-label">TikTok URL</div>
+        <input class="cp-input" id="_ttUrl" type="text"
+          placeholder="https://www.tiktok.com/@username/video/..."
+          style="font-size:13px;">
+        <button class="cp-btn" id="_ttFetchBtn" style="margin-top:10px;">영상 가져오기</button>
+        <button class="cp-btn" id="_ttClearBtn"
+          style="margin-top:8px;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);">
+          URL 지우기
+        </button>
+      </div>
+      <div id="_ttResult" style="display:none;margin-top:16px;"></div>
+      <div id="_ttErr" style="display:none;margin-top:12px;" class="cp-result err"></div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<div class="toast" id="toastEl"></div>
+
+<script>
+// ── 상수 ──────────────────────────────────────────────────────────────────────
+const PROXY       = 'https://corsproxy.io/?';
+const MEDIA_PROXY = 'https://cp-converter.vercel.app/api/media-proxy?url=';
+const CP_THREADS_API = 'https://cp-converter.vercel.app/api/threads-images';
+
+// ── 토스트 ────────────────────────────────────────────────────────────────────
+let _toastTimer;
+function toast(msg, ok){
+  const el = document.getElementById('toastEl');
+  el.textContent = msg;
+  el.className = 'toast show' + (ok ? ' ok' : '');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// ── 탭 전환 ───────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    document.getElementById('tab-threads').style.display = tab === 'threads' ? '' : 'none';
+    document.getElementById('tab-tiktok').style.display  = tab === 'tiktok'  ? '' : 'none';
+  });
+});
+
+// ── 미디어 fetching (MEDIA_PROXY 우선) ───────────────────────────────────────
+async function _fetchBlob(url){
+  for(const target of [
+    MEDIA_PROXY + encodeURIComponent(url),
+    url,
+    PROXY + encodeURIComponent(url),
+  ]){
+    try{
+      const r = await fetch(target);
+      if(r.ok) return await r.blob();
+    } catch(e){}
+  }
+  return null;
+}
+
+// ── 미디어 저장 ───────────────────────────────────────────────────────────────
+async function dlMedia(url, filename){
+  toast('다운로드 중...', true);
+  const isVideo = filename.endsWith('.mp4');
+  const mime    = isVideo ? 'video/mp4' : 'image/jpeg';
+  const isIOS   = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  const blob = await _fetchBlob(url);
+  if(blob){
+    const file = new File([blob], filename, {type: mime});
+    if(isIOS && navigator.canShare?.({files:[file]})){
+      try{ await navigator.share({files:[file], title: filename}); return; }
+      catch(e){ if(e.name === 'AbortError') return; }
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file);
+    a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    toast('다운로드 완료 ✓', true);
+    return;
+  }
+  window.open(MEDIA_PROXY + encodeURIComponent(url), '_blank');
+  toast('파일 저장 화면이 열립니다');
+}
+
+// ── 영상 저장 오버레이 (iOS 꾹 누르기 안내) ──────────────────────────────────
+function _showVideoSaveOverlay(videoUrl){
+  const old = document.getElementById('_vidSaveOverlay');
+  if(old) old.remove();
+  const overlay = document.createElement('div');
+  overlay.id = '_vidSaveOverlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:9999;background:#000;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  `;
+  overlay.innerHTML = `
+    <div style="position:absolute;top:14px;right:14px;">
+      <button id="_vidOverlayClose" style="background:rgba(255,255,255,0.15);border:none;color:#fff;
+        width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <video src="${videoUrl}" controls playsinline autoplay
+      style="width:100%;max-height:70vh;object-fit:contain;"></video>
+    <div style="text-align:center;padding:0 24px;">
+      <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:8px;">📱 영상을 꾹 눌러 저장하세요</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.7);line-height:1.7;">
+        위 영상에서 손가락으로 <b style="color:#fff">꾹 누르기</b><br>
+        → <b style="color:#4ade80">"비디오 저장"</b> 선택<br>
+        <span style="font-size:11px;color:rgba(255,255,255,0.45);">(iOS Safari · Android Chrome 지원)</span>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('_vidOverlayClose').onclick = () => overlay.remove();
+}
+
+// ════════════════════════════════════════════════════════════
+//  THREADS
+// ════════════════════════════════════════════════════════════
+(function(){
+  const q = id => document.getElementById(id);
+
+  async function dlItem(rawUrl, fname, btn){
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = '다운로드 중...';
+    try{ await dlMedia(rawUrl, fname); }
+    finally{ btn.disabled = false; btn.textContent = orig; }
+  }
+
+  q('_vdClearBtn').onclick = () => {
+    q('_vdUrl').value = '';
+    q('_vdItems').style.display = 'none';
+    q('_vdItems').innerHTML = '';
+    q('_vdErr').style.display = 'none';
+    q('_vdUrl').focus();
+  };
+
+  q('_vdFetchBtn').onclick = async () => {
+    const inputUrl = q('_vdUrl').value.trim();
+    if(!inputUrl){ toast('Threads URL을 입력해주세요'); return; }
+    const btn = q('_vdFetchBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 분석 중...';
+    q('_vdItems').style.display = 'none';
+    q('_vdItems').innerHTML = '';
+    q('_vdErr').style.display = 'none';
+    try{
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), 20000);
+      let res;
+      try{
+        res = await fetch(CP_THREADS_API, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({url: inputUrl, token: ''}),
+          signal: ctrl.signal,
+        });
+      } finally { clearTimeout(tid); }
+      const data = await res.json();
+      if(data.error) throw new Error(data.error);
+
+      const images = data.images || [];
+      const videos = data.videos || [];
+      const total  = images.length + videos.length;
+
+      if(total === 0){
+        q('_vdErr').style.display = 'block';
+        q('_vdErr').textContent = data.message || '이미지/영상을 찾을 수 없습니다.';
+        return;
+      }
+
+      const container = q('_vdItems');
+      const ts = Date.now();
+
+      images.forEach((url, idx) => {
+        const fname = `threads_${ts}_${idx+1}.jpg`;
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'margin-bottom:16px;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;';
+        wrap.innerHTML = `
+          <div style="padding:7px 12px;background:var(--bg3);font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);">
+            🖼️ 사진${images.length>1?' '+(idx+1):''}
+          </div>
+          <img src="${url}" style="width:100%;max-height:360px;object-fit:contain;display:block;background:#000;" alt="">
+          <div style="padding:10px;">
+            <button class="cp-btn" style="margin:0;font-size:13px;">📥 사진 저장</button>
+          </div>`;
+        wrap.querySelector('.cp-btn').onclick = function(){ dlItem(url, fname, this); };
+        container.appendChild(wrap);
+      });
+
+      videos.forEach((url, idx) => {
+        const fname = `threads_${ts}_video${idx+1}.mp4`;
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'margin-bottom:16px;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;';
+        wrap.innerHTML = `
+          <div style="padding:7px 12px;background:var(--bg3);font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);">
+            🎬 영상${videos.length>1?' '+(idx+1):''}
+          </div>
+          <video src="${url}" controls playsinline style="width:100%;max-height:360px;background:#000;display:block;"></video>
+          <div style="padding:10px;">
+            <button class="cp-btn" style="margin:0;font-size:13px;">📥 영상 저장</button>
+          </div>`;
+        wrap.querySelector('.cp-btn').onclick = function(){ dlItem(url, fname, this); };
+        container.appendChild(wrap);
+      });
+
+      container.style.display = 'block';
+      toast(`미디어 ${total}개 발견`, true);
+    } catch(e){
+      q('_vdErr').style.display = 'block';
+      q('_vdErr').textContent = '오류: ' + e.message;
+    } finally {
+      btn.disabled = false; btn.innerHTML = '미디어 가져오기';
+    }
+  };
+})();
+
+// ════════════════════════════════════════════════════════════
+//  TIKTOK
+// ════════════════════════════════════════════════════════════
+(function(){
+  const qq = id => document.getElementById(id);
+
+  qq('_ttClearBtn').onclick = () => {
+    qq('_ttUrl').value = '';
+    qq('_ttResult').style.display = 'none';
+    qq('_ttResult').innerHTML = '';
+    qq('_ttErr').style.display = 'none';
+    qq('_ttUrl').focus();
+  };
+
+  qq('_ttFetchBtn').onclick = async () => {
+    const inputUrl = qq('_ttUrl').value.trim();
+    if(!inputUrl){ toast('TikTok URL을 입력해주세요'); return; }
+    const btn = qq('_ttFetchBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 분석 중...';
+    qq('_ttResult').style.display = 'none';
+    qq('_ttResult').innerHTML = '';
+    qq('_ttErr').style.display = 'none';
+    try{
+      const apiUrl = `https://tikwm.com/api/?url=${encodeURIComponent(inputUrl)}&hd=1`;
+      const r = await fetch(apiUrl, {signal: AbortSignal.timeout(15000)});
+      if(!r.ok) throw new Error('API 응답 오류 ' + r.status);
+      const j = await r.json();
+      if(j.code !== 0 || !j.data) throw new Error(j.msg || '영상 정보를 가져올 수 없습니다');
+
+      const d = j.data;
+      const videoUrl = d.play || d.wmplay || '';
+      const cover    = d.cover || '';
+      const title    = d.title || '';
+      const author   = (d.author && d.author.nickname) || '';
+      if(!videoUrl) throw new Error('영상 URL을 찾을 수 없습니다');
+
+      const ts = Date.now();
+      const fname = `tiktok_${ts}.mp4`;
+      const container = qq('_ttResult');
+      container.innerHTML = `
+        <div style="border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:8px;">
+          <div style="padding:7px 12px;background:var(--bg3);font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);">
+            🎵 ${author ? '@'+author : 'TikTok'} ${title ? '· '+title.slice(0,40) : ''}
+          </div>
+          <video src="${MEDIA_PROXY + encodeURIComponent(videoUrl)}" controls playsinline
+            style="width:100%;max-height:480px;background:#000;display:block;"
+            poster="${cover}"></video>
+          <div style="padding:10px;">
+            <button class="cp-btn" id="_ttDlBtn" style="margin:0;font-size:13px;">📥 영상 저장 (워터마크 없음)</button>
+          </div>
+        </div>`;
+      container.style.display = 'block';
+
+      container.querySelector('#_ttDlBtn').onclick = async function(){
+        const orig = this.textContent;
+        this.disabled = true; this.textContent = '다운로드 중...';
+        try{ await dlMedia(videoUrl, fname); }
+        finally{ this.disabled = false; this.textContent = orig; }
+      };
+
+      toast('TikTok 영상 발견', true);
+    } catch(e){
+      qq('_ttErr').style.display = 'block';
+      qq('_ttErr').textContent = '오류: ' + e.message;
+    } finally {
+      btn.disabled = false; btn.innerHTML = '영상 가져오기';
+    }
+  };
+})();
+</script>
+</body>
+</html>
