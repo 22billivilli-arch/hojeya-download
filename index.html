@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>호제야 다운받자</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
@@ -118,57 +118,18 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
   <span class="header-notice">무단배포 적발시 유료화합니다</span>
 </header>
 
-<nav class="tab-nav">
-  <button class="tab-btn active" data-tab="threads">🧵 Threads</button>
-  <button class="tab-btn" data-tab="tiktok">🎵 TikTok</button>
-</nav>
-
 <div class="wrap">
-
-  <!-- ── Threads 탭 ── -->
-  <div id="tab-threads">
-    <div class="cp-tab-wrap">
-      <div class="cp-head-row">
-        <span class="cp-head-title">📥 Threads 미디어 다운로드</span>
-      </div>
-      <div>
-        <div class="cp-label">Threads 게시물 URL</div>
-        <input class="cp-input" id="_vdUrl" type="text"
-          placeholder="https://www.threads.net/@username/post/..."
-          style="font-size:13px;">
-        <button class="cp-btn" id="_vdFetchBtn" style="margin-top:10px;">미디어 가져오기</button>
-        <button class="cp-btn" id="_vdClearBtn"
-          style="margin-top:8px;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);">
-          URL 지우기
-        </button>
-      </div>
-      <div id="_vdItems" style="display:none;margin-top:16px;"></div>
-      <div id="_vdErr" style="display:none;margin-top:12px;" class="cp-result err"></div>
+  <div class="cp-tab-wrap">
+    <div class="cp-head-row"><span class="cp-head-title">📥 영상 다운로드</span></div>
+    <div class="cp-label">틱톡 / 스레드 / 샤오홍슈 URL</div>
+    <input class="cp-input" id="_dlUrl" type="text" placeholder="틱톡·스레드·샤오홍슈 링크 붙여넣기" style="font-size:13px;">
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="cp-btn" id="_dlBtn" style="margin-top:0;flex:1;">가져오기</button>
+      <button class="cp-btn" id="_dlClear" style="margin-top:0;flex:0 0 auto;width:auto;padding:12px 16px;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);">URL 지우기</button>
     </div>
+    <div id="_dlResult" style="display:none;margin-top:16px;"></div>
+    <div id="_dlErr" style="display:none;margin-top:12px;" class="cp-result err"></div>
   </div>
-
-  <!-- ── TikTok 탭 ── -->
-  <div id="tab-tiktok" style="display:none;">
-    <div class="cp-tab-wrap">
-      <div class="cp-head-row">
-        <span class="cp-head-title">🎵 TikTok 영상 다운로드</span>
-      </div>
-      <div>
-        <div class="cp-label">TikTok URL</div>
-        <input class="cp-input" id="_ttUrl" type="text"
-          placeholder="https://www.tiktok.com/@username/video/..."
-          style="font-size:13px;">
-        <button class="cp-btn" id="_ttFetchBtn" style="margin-top:10px;">영상 가져오기</button>
-        <button class="cp-btn" id="_ttClearBtn"
-          style="margin-top:8px;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);">
-          URL 지우기
-        </button>
-      </div>
-      <div id="_ttResult" style="display:none;margin-top:16px;"></div>
-      <div id="_ttErr" style="display:none;margin-top:12px;" class="cp-result err"></div>
-    </div>
-  </div>
-
 </div><!-- /wrap -->
 
 <div class="toast" id="toastEl"></div>
@@ -189,16 +150,7 @@ function toast(msg, ok){
   _toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
-// ── 탭 전환 ───────────────────────────────────────────────────────────────────
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const tab = btn.dataset.tab;
-    document.getElementById('tab-threads').style.display = tab === 'threads' ? '' : 'none';
-    document.getElementById('tab-tiktok').style.display  = tab === 'tiktok'  ? '' : 'none';
-  });
-});
+// (탭 제거 — 통합 다운로더)
 
 // ── 미디어 fetching (MEDIA_PROXY 우선) ───────────────────────────────────────
 async function _fetchBlob(url){
@@ -272,172 +224,66 @@ function _showVideoSaveOverlay(videoUrl){
 }
 
 // ════════════════════════════════════════════════════════════
-//  THREADS
+//  영상 다운로드 (틱톡 / 스레드 / 샤오홍슈 자동감지)
 // ════════════════════════════════════════════════════════════
 (function(){
   const q = id => document.getElementById(id);
-
-  async function dlItem(rawUrl, fname, btn){
-    const orig = btn.textContent;
-    btn.disabled = true; btn.textContent = '다운로드 중...';
-    try{ await dlMedia(rawUrl, fname); }
-    finally{ btn.disabled = false; btn.textContent = orig; }
-  }
-
-  q('_vdClearBtn').onclick = () => {
-    q('_vdUrl').value = '';
-    q('_vdItems').style.display = 'none';
-    q('_vdItems').innerHTML = '';
-    q('_vdErr').style.display = 'none';
-    q('_vdUrl').focus();
-  };
-
-  q('_vdFetchBtn').onclick = async () => {
-    const inputUrl = q('_vdUrl').value.trim();
-    if(!inputUrl){ toast('Threads URL을 입력해주세요'); return; }
-    const btn = q('_vdFetchBtn');
-    btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 분석 중...';
-    q('_vdItems').style.display = 'none';
-    q('_vdItems').innerHTML = '';
-    q('_vdErr').style.display = 'none';
+  q('_dlClear').onclick = () => { q('_dlUrl').value=''; q('_dlResult').style.display='none'; q('_dlResult').innerHTML=''; q('_dlErr').style.display='none'; q('_dlUrl').focus(); };
+  q('_dlBtn').onclick = async () => {
+    const url = q('_dlUrl').value.trim();
+    if(!url){ toast('URL을 입력해주세요'); return; }
+    const btn = q('_dlBtn'); btn.disabled=true; const ot=btn.textContent; btn.innerHTML='<span class="spin"></span> 분석 중...';
+    q('_dlResult').style.display='none'; q('_dlResult').innerHTML=''; q('_dlErr').style.display='none';
     try{
-      const ctrl = new AbortController();
-      const tid  = setTimeout(() => ctrl.abort(), 20000);
-      let res;
-      try{
-        res = await fetch(CP_THREADS_API, {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({url: inputUrl, token: ''}),
-          signal: ctrl.signal,
-        });
-      } finally { clearTimeout(tid); }
-      const data = await res.json();
-      if(data.error) throw new Error(data.error);
-
-      const images = data.images || [];
-      const videos = data.videos || [];
-      const total  = images.length + videos.length;
-
-      if(total === 0){
-        q('_vdErr').style.display = 'block';
-        q('_vdErr').textContent = data.message || '이미지/영상을 찾을 수 없습니다.';
-        return;
-      }
-
-      const container = q('_vdItems');
-      const ts = Date.now();
-
-      images.forEach((url, idx) => {
-        const fname = `threads_${ts}_${idx+1}.jpg`;
-        const wrap = document.createElement('div');
-        wrap.style.cssText = 'margin-bottom:16px;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;';
-        wrap.innerHTML = `
-          <div style="padding:7px 12px;background:var(--bg3);font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);">
-            🖼️ 사진${images.length>1?' '+(idx+1):''}
-          </div>
-          <img src="${url}" style="width:100%;max-height:360px;object-fit:contain;display:block;background:#000;" alt="">
-          <div style="padding:10px;">
-            <button class="cp-btn" style="margin:0;font-size:13px;">📥 사진 저장</button>
-          </div>`;
-        wrap.querySelector('.cp-btn').onclick = function(){ dlItem(url, fname, this); };
-        container.appendChild(wrap);
-      });
-
-      videos.forEach((url, idx) => {
-        const fname = `threads_${ts}_video${idx+1}.mp4`;
-        const wrap = document.createElement('div');
-        wrap.style.cssText = 'margin-bottom:16px;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;';
-        wrap.innerHTML = `
-          <div style="padding:7px 12px;background:var(--bg3);font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);">
-            🎬 영상${videos.length>1?' '+(idx+1):''}
-          </div>
-          <video src="${url}" controls playsinline style="width:100%;max-height:360px;background:#000;display:block;"></video>
-          <div style="padding:10px;">
-            <button class="cp-btn" style="margin:0;font-size:13px;">📥 영상 저장</button>
-          </div>`;
-        wrap.querySelector('.cp-btn').onclick = function(){ dlItem(url, fname, this); };
-        container.appendChild(wrap);
-      });
-
-      container.style.display = 'block';
-      toast(`미디어 ${total}개 발견`, true);
-    } catch(e){
-      q('_vdErr').style.display = 'block';
-      q('_vdErr').textContent = '오류: ' + e.message;
-    } finally {
-      btn.disabled = false; btn.innerHTML = '미디어 가져오기';
-    }
-  };
-})();
-
-// ════════════════════════════════════════════════════════════
-//  TIKTOK
-// ════════════════════════════════════════════════════════════
-(function(){
-  const qq = id => document.getElementById(id);
-
-  qq('_ttClearBtn').onclick = () => {
-    qq('_ttUrl').value = '';
-    qq('_ttResult').style.display = 'none';
-    qq('_ttResult').innerHTML = '';
-    qq('_ttErr').style.display = 'none';
-    qq('_ttUrl').focus();
-  };
-
-  qq('_ttFetchBtn').onclick = async () => {
-    const inputUrl = qq('_ttUrl').value.trim();
-    if(!inputUrl){ toast('TikTok URL을 입력해주세요'); return; }
-    const btn = qq('_ttFetchBtn');
-    btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 분석 중...';
-    qq('_ttResult').style.display = 'none';
-    qq('_ttResult').innerHTML = '';
-    qq('_ttErr').style.display = 'none';
-    try{
-      const apiUrl = `https://tikwm.com/api/?url=${encodeURIComponent(inputUrl)}&hd=1`;
-      const r = await fetch(apiUrl, {signal: AbortSignal.timeout(15000)});
-      if(!r.ok) throw new Error('API 응답 오류 ' + r.status);
-      const j = await r.json();
-      if(j.code !== 0 || !j.data) throw new Error(j.msg || '영상 정보를 가져올 수 없습니다');
-
-      const d = j.data;
-      const videoUrl = d.play || d.wmplay || '';
-      const cover    = d.cover || '';
-      const title    = d.title || '';
-      const author   = (d.author && d.author.nickname) || '';
-      if(!videoUrl) throw new Error('영상 URL을 찾을 수 없습니다');
-
-      const ts = Date.now();
-      const fname = `tiktok_${ts}.mp4`;
-      const container = qq('_ttResult');
-      container.innerHTML = `
-        <div style="border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:8px;">
-          <div style="padding:7px 12px;background:var(--bg3);font-size:12px;color:var(--text2);border-bottom:1px solid var(--border);">
-            🎵 ${author ? '@'+author : 'TikTok'} ${title ? '· '+title.slice(0,40) : ''}
-          </div>
-          <video src="${MEDIA_PROXY + encodeURIComponent(videoUrl)}" controls playsinline
-            style="width:100%;max-height:480px;background:#000;display:block;"
-            poster="${cover}"></video>
-          <div style="padding:10px;">
-            <button class="cp-btn" id="_ttDlBtn" style="margin:0;font-size:13px;">📥 영상 저장 (워터마크 없음)</button>
-          </div>
-        </div>`;
-      container.style.display = 'block';
-
-      container.querySelector('#_ttDlBtn').onclick = async function(){
-        const orig = this.textContent;
-        this.disabled = true; this.textContent = '다운로드 중...';
-        try{ await dlMedia(videoUrl, fname); }
-        finally{ this.disabled = false; this.textContent = orig; }
+      let videos=[], images=[], platform='';
+      if(/tiktok\.com|vt\.tiktok|vm\.tiktok/i.test(url)){
+        platform='틱톡';
+        const j=await (await fetch('https://tikwm.com/api/?url='+encodeURIComponent(url)+'&hd=1',{signal:AbortSignal.timeout(20000)})).json();
+        if(j.code!==0||!j.data) throw new Error(j.msg||'틱톡 정보를 가져올 수 없습니다');
+        if(j.data.play) videos=[j.data.play];
+        if(j.data.images) images=j.data.images;
+      } else if(/threads\.(net|com)/i.test(url)){
+        platform='스레드';
+        const d=await (await fetch(CP_THREADS_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url}),signal:AbortSignal.timeout(25000)})).json();
+        if(d.error) throw new Error(d.error); videos=d.videos||[]; images=d.images||[];
+      } else if(/xhslink\.com|xiaohongshu\.com/i.test(url)){
+        platform='샤오홍슈';
+        const d=await (await fetch('https://cp-converter.vercel.app/api/xhs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url}),signal:AbortSignal.timeout(25000)})).json();
+        if(d.error) throw new Error(d.error); videos=d.videos||[]; images=d.images||[];
+      } else { throw new Error('지원하지 않는 URL (틱톡/스레드/샤오홍슈)'); }
+      const total=videos.length+images.length;
+      if(!total) throw new Error('미디어를 찾을 수 없습니다');
+      const cont=q('_dlResult'); const ts=Date.now();
+      const slider=document.createElement('div');
+      slider.style.cssText='display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px;';
+      const mk=(kind,u,idx,cnt)=>{
+        const it=document.createElement('div');
+        it.style.cssText='flex:0 0 70%;scroll-snap-align:start;position:relative;aspect-ratio:4/3;background:#000;border-radius:10px;overflow:hidden;';
+        const psrc = MEDIA_PROXY+encodeURIComponent(u);
+        it.innerHTML = (kind==='video'
+          ? '<video src="'+psrc+'" controls playsinline style="width:100%;height:100%;object-fit:contain;background:#000;"></video>'
+          : '<img src="'+psrc+'" style="width:100%;height:100%;object-fit:contain;background:#000;">')
+          + '<span style="position:absolute;top:6px;left:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;pointer-events:none;">'+(kind==='video'?'🎬':'🖼️')+(cnt>1?' '+(idx+1):'')+'</span>';
+        return it;
       };
-
-      toast('TikTok 영상 발견', true);
-    } catch(e){
-      qq('_ttErr').style.display = 'block';
-      qq('_ttErr').textContent = '오류: ' + e.message;
-    } finally {
-      btn.disabled = false; btn.innerHTML = '영상 가져오기';
-    }
+      videos.forEach((u,i)=>slider.appendChild(mk('video',u,i,videos.length)));
+      images.forEach((u,i)=>slider.appendChild(mk('image',u,i,images.length)));
+      cont.appendChild(slider);
+      const dlRow=document.createElement('div'); dlRow.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;';
+      const mkDl=(kind,u,idx,cnt)=>{
+        const fname = kind==='video' ? platform+'_'+ts+'_v'+(idx+1)+'.mp4' : platform+'_'+ts+'_'+(idx+1)+'.jpg';
+        const b=document.createElement('button'); b.className='cp-btn'; b.style.cssText='margin:0;flex:1 1 130px;font-size:13px;';
+        b.textContent='📥 '+(kind==='video'?'영상':'사진')+(cnt>1?' '+(idx+1):'')+' 다운로드';
+        b.onclick=async function(){ const o=this.textContent; this.disabled=true; this.textContent='다운로드 중...'; try{ await dlMedia(u, fname); } finally{ this.disabled=false; this.textContent=o; } };
+        return b;
+      };
+      videos.forEach((u,i)=>dlRow.appendChild(mkDl('video',u,i,videos.length)));
+      images.forEach((u,i)=>dlRow.appendChild(mkDl('image',u,i,images.length)));
+      cont.appendChild(dlRow);
+      cont.style.display='block';
+      toast(platform+' 미디어 '+total+'개', true);
+    }catch(e){ q('_dlErr').style.display='block'; q('_dlErr').textContent='오류: '+(e.name==='TimeoutError'?'시간초과(다시 시도)':e.message); }
+    finally{ btn.disabled=false; btn.innerHTML=ot; }
   };
 })();
 </script>
