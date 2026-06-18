@@ -173,11 +173,13 @@ async function dlMedia(url, filename){
   const isVideo = filename.endsWith('.mp4');
   const mime    = isVideo ? 'video/mp4' : 'image/jpeg';
   const isIOS   = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
 
   const blob = await _fetchBlob(url);
   if(blob){
     const file = new File([blob], filename, {type: mime});
-    if(isIOS && navigator.canShare?.({files:[file]})){
+    // iOS·안드로이드 모두 공유시트로 → 사진/갤러리 앱에 저장(다운로드 폴더 말고 갤러리로)
+    if((isIOS || isAndroid) && navigator.canShare?.({files:[file]})){
       try{ await navigator.share({files:[file], title: filename}); return; }
       catch(e){ if(e.name === 'AbortError') return; }
     }
