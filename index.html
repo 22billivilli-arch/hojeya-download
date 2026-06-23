@@ -481,8 +481,7 @@ function scRender(){
         '<div class="scn">'+(p.name||'')+'</div>'+
         '<div class="scmeta">'+won(p.price)+'원 · '+(p.store||'')+'</div>'+
         '<div class="sc-row">'+
-          '<a class="sc-mini" href="'+(p.productUrl||'#')+'" target="_blank" rel="noopener">상품</a>'+
-          '<button class="sc-mini" onclick="scCopy(this.getAttribute(\'data-l\'))" data-l="'+(p.link||'')+'">제휴링크 복사</button>'+
+          '<button class="sc-mini" onclick="scIssue(this,\''+(p.id||'')+'\')">🔗 제휴링크 발급</button>'+
         '</div>'+
       '</div>'+
       '<div style="text-align:right;flex:0 0 auto;">'+
@@ -492,6 +491,21 @@ function scRender(){
     '</div>').join('');
 }
 function scCopy(t){ if(!t) return; navigator.clipboard?.writeText(t).then(()=>toast('제휴링크 복사됨',true),()=>toast('복사 실패')); }
+async function scIssue(btn, id){
+  if(!id){ toast('상품 ID 없음'); return; }
+  const ck=scCookies(); if(!ck){ toast('먼저 로그인하세요'); scRefreshAuth(); return; }
+  const o=btn.textContent; btn.disabled=true; btn.innerHTML='<span class="spin"></span> 발급 중...';
+  try{
+    const r=await fetch(SC_API+'/issue-link',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({cookies:ck, affId:scAff(), productId:id})});
+    const d=await r.json();
+    if(r.status===401){ toast('세션 만료 — 다시 로그인'); localStorage.removeItem('sc_cookies'); scRefreshAuth(); return; }
+    if(d.error||!d.url) throw new Error(d.error||'발급 실패');
+    btn.outerHTML='<a class="sc-mini" href="'+d.url+'" target="_blank" rel="noopener" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent);">'+d.url+'</a>'+
+      '<button class="sc-mini" onclick="scCopy(\''+d.url+'\')">복사</button>';
+    scCopy(d.url);
+  }catch(e){ btn.disabled=false; btn.textContent=o; toast('발급 실패: '+e.message); }
+}
 async function scDoSearch(){
   const q=_scq('scQuery').value.trim();
   if(!q){ toast('검색어를 입력하세요'); return; }
