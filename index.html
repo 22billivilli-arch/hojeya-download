@@ -171,14 +171,10 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
     <!-- 로그아웃 상태: 로그인 안내 -->
     <div id="scOut">
       <div class="cp-result" style="margin-top:0;">
-        본인 네이버 아이디로 로그인하면 <b>쇼핑커넥트(브랜드커넥트) 제휴상품을 수수료순으로</b> 검색할 수 있어요.<br>
-        <span style="color:var(--text3);font-size:11px;">로그인 정보(쿠키)는 <b>이 브라우저에만</b> 저장되고 서버에 저장되지 않습니다.</span>
+        아래 버튼을 누르면 <b>네이버 공식 로그인 화면</b>이 떠요. 거기에 직접 아이디·비밀번호를 입력하세요.<br>
+        <span style="color:var(--text3);font-size:11px;">아이디·비번을 <b>이 앱 폼에 받지 않습니다.</b> 로그인 후 쿠키는 <b>이 브라우저에만</b> 저장(서버 무저장).</span>
       </div>
-      <div class="cp-label" style="margin-top:14px;">네이버 아이디</div>
-      <input class="cp-input" id="scId" type="text" autocomplete="username" placeholder="네이버 아이디">
-      <div class="cp-label" style="margin-top:10px;">비밀번호</div>
-      <input class="cp-input" id="scPw" type="password" autocomplete="current-password" placeholder="비밀번호 (캡차는 다음 화면에서)">
-      <button class="cp-btn" id="scLoginBtn">네이버 로그인</button>
+      <button class="cp-btn" id="scLoginBtn">네이버 로그인 화면 열기</button>
     </div>
 
     <!-- 로그인 상태: 검색 -->
@@ -214,7 +210,7 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
       <div id="ilLoading">불러오는 중…</div>
       <img id="ilShot" style="width:100%;display:block;cursor:crosshair;" tabindex="0" alt="">
     </div>
-    <input id="ilKbd" placeholder="여기에 입력 (캡차·인증번호 등) — 위 화면 입력칸 먼저 클릭">
+    <input id="ilKbd" placeholder="여기에 입력 (아이디·비번·캡차) — 위 화면 입력칸 먼저 클릭">
   </div>
 </div>
 
@@ -403,7 +399,7 @@ async function scOpenLogin(){
   _scq('ilModal').classList.add('open');
   try{
     const r = await fetch(SC_API+'/login/start', {method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({username:_scq('scId').value.trim(), password:_scq('scPw').value})});
+      body:JSON.stringify({})});   // 자격증명 미전송 — 유저가 모달의 네이버 화면에 직접 입력
     const d = await r.json();
     if(!d.sessionId) throw new Error(d.error||'세션 시작 실패');
     _il.sid=d.sessionId; if(d.viewport) _il.vp=d.viewport;
@@ -431,7 +427,7 @@ async function _scTick(){
       _il.busy=false; return;
     }
     if(d.png){ _scq('ilLoading').style.display='none'; _scq('ilShot').src='data:image/jpeg;base64,'+d.png; }
-    _scq('ilStatus').textContent='캡차·기기인증이 보이면 입력칸을 클릭한 뒤 아래 칸에 입력하세요 (자동 갱신 중)';
+    _scq('ilStatus').textContent='네이버 로그인 화면입니다. 입력칸을 클릭한 뒤 아래 칸에 아이디·비번을 입력하세요. 캡차가 나오면 풀어주세요. (자동 갱신 중)';
   }catch(e){}
   _il.busy=false;
 }
