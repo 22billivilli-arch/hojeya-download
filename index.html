@@ -481,6 +481,7 @@ function scRender(){
         '<div class="scn">'+(p.name||'')+'</div>'+
         '<div class="scmeta">'+won(p.price)+'원 · '+(p.store||'')+'</div>'+
         '<div class="sc-row">'+
+          '<a class="sc-mini" href="'+(p.productUrl||'#')+'" target="_blank" rel="noopener">상품 열기</a>'+
           '<button class="sc-mini" onclick="scIssue(this,\''+(p.id||'')+'\')">🔗 제휴링크 발급</button>'+
         '</div>'+
       '</div>'+
@@ -501,9 +502,9 @@ async function scIssue(btn, id){
     const d=await r.json();
     if(r.status===401){ toast('세션 만료 — 다시 로그인'); localStorage.removeItem('sc_cookies'); scRefreshAuth(); return; }
     if(d.error||!d.url) throw new Error(d.error||'발급 실패');
-    btn.outerHTML='<a class="sc-mini" href="'+d.url+'" target="_blank" rel="noopener" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent);">'+d.url+'</a>'+
-      '<button class="sc-mini" onclick="scCopy(\''+d.url+'\')">복사</button>';
-    scCopy(d.url);
+    btn.textContent='✓ 발급완료'; btn.disabled=true;
+    btn.style.color='var(--accent)'; btn.style.borderColor='var(--accent)';
+    toast('제휴링크 발급완료', true);
   }catch(e){ btn.disabled=false; btn.textContent=o; toast('발급 실패: '+e.message); }
 }
 async function scDoSearch(){
