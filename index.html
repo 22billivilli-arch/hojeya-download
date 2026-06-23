@@ -442,8 +442,8 @@ async function _scTick(){
       _il.busy=false; return;
     }
     if(d.png){ _scq('ilLoading').style.display='none'; _scq('ilShot').src='data:image/jpeg;base64,'+d.png; }
-    // 자동로그인이 ~5초 내 안 끝나면(캡차/인증) 모달 띄움
-    if(!_il.modalShown && _il.ticks>=4) _scShowModal();
+    // 자동로그인이 ~7초 내 안 끝나면(캡차/인증) 모달 띄움
+    if(!_il.modalShown && _il.ticks>=6) _scShowModal();
   }catch(e){}
   _il.busy=false;
 }
