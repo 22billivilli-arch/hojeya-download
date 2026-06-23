@@ -109,6 +109,32 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
   border:none;border-top:1px solid var(--border);
   margin:28px 0;
 }
+
+/* ── 로그인 모달 ── */
+.il-modal{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.85);
+  align-items:center;justify-content:center;padding:12px;}
+.il-modal.open{display:flex;}
+.il-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);
+  width:100%;max-width:520px;max-height:94vh;overflow:auto;}
+.il-bar{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);}
+.il-bar b{flex:1;font-size:14px;}
+.il-x{background:var(--bg4);border:none;color:var(--text);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:15px;}
+.il-status{font-size:12px;color:var(--text2);padding:8px 14px;line-height:1.5;}
+.il-shot-wrap{position:relative;background:#000;min-height:120px;}
+#ilLoading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:13px;}
+#ilKbd{width:calc(100% - 28px);margin:10px 14px 14px;padding:9px 11px;background:var(--bg3);
+  border:1px solid var(--border2);border-radius:var(--r2);color:var(--text);font-size:13px;outline:none;}
+
+/* ── 검색기 결과 카드 ── */
+.sc-card{display:flex;gap:10px;padding:10px;border:1px solid var(--border2);border-radius:var(--r2);
+  background:var(--bg3);margin-bottom:8px;align-items:center;}
+.sc-card img{width:58px;height:58px;border-radius:8px;object-fit:cover;background:var(--bg4);flex:0 0 auto;}
+.sc-card .scn{font-size:12.5px;line-height:1.4;max-height:36px;overflow:hidden;}
+.sc-card .scmeta{font-size:11px;color:var(--text2);margin-top:3px;}
+.sc-rate{font-size:16px;font-weight:800;color:var(--accent);}
+.sc-mini{padding:5px 9px;font-size:11px;border-radius:6px;border:1px solid var(--border2);
+  background:var(--bg4);color:var(--text);cursor:pointer;}
+.sc-row{display:flex;gap:6px;margin-top:6px;}
 </style>
 </head>
 <body>
@@ -118,7 +144,13 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
   <span class="header-notice">무단배포 적발시 유료화합니다</span>
 </header>
 
+<div class="tab-nav">
+  <button class="tab-btn active" data-tab="download" onclick="scSwitchTab('download')">📥 영상 다운로드</button>
+  <button class="tab-btn" data-tab="sc" onclick="scSwitchTab('sc')">🛒 쇼핑커넥트 검색기</button>
+</div>
+
 <div class="wrap">
+ <div id="tab-download">
   <div class="cp-tab-wrap">
     <div class="cp-head-row"><span class="cp-head-title">📥 영상 다운로드</span></div>
     <div class="cp-label">틱톡 / 스레드 / 샤오홍슈 URL</div>
@@ -130,7 +162,61 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
     <div id="_dlResult" style="display:none;margin-top:16px;"></div>
     <div id="_dlErr" style="display:none;margin-top:12px;" class="cp-result err"></div>
   </div>
+ </div><!-- /tab-download -->
+
+ <div id="tab-sc" style="display:none;">
+  <div class="cp-tab-wrap">
+    <div class="cp-head-row"><span class="cp-head-title">🛒 쇼핑커넥트 수수료 검색기</span></div>
+
+    <!-- 로그아웃 상태: 로그인 안내 -->
+    <div id="scOut">
+      <div class="cp-result" style="margin-top:0;">
+        본인 네이버 아이디로 로그인하면 <b>쇼핑커넥트(브랜드커넥트) 제휴상품을 수수료순으로</b> 검색할 수 있어요.<br>
+        <span style="color:var(--text3);font-size:11px;">로그인 정보(쿠키)는 <b>이 브라우저에만</b> 저장되고 서버에 저장되지 않습니다.</span>
+      </div>
+      <div class="cp-label" style="margin-top:14px;">네이버 아이디</div>
+      <input class="cp-input" id="scId" type="text" autocomplete="username" placeholder="네이버 아이디">
+      <div class="cp-label" style="margin-top:10px;">비밀번호</div>
+      <input class="cp-input" id="scPw" type="password" autocomplete="current-password" placeholder="비밀번호 (캡차는 다음 화면에서)">
+      <button class="cp-btn" id="scLoginBtn">네이버 로그인</button>
+    </div>
+
+    <!-- 로그인 상태: 검색 -->
+    <div id="scIn" style="display:none;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="font-size:12px;color:var(--accent);flex:1;">● 로그인됨 (AFF <span id="scAff"></span>)</span>
+        <button class="sc-mini" id="scLogout">로그아웃</button>
+      </div>
+      <input class="cp-input" id="scQuery" type="text" placeholder="상품 키워드 (예: 무지외반증교정기, 선풍기)">
+      <button class="cp-btn" id="scSearchBtn">수수료순 검색</button>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:12px;">
+        <span style="font-size:11px;color:var(--text2);">정렬</span>
+        <select id="scSort" class="cp-input" style="width:auto;flex:1;padding:7px 9px;font-size:12px;margin:0;">
+          <option value="rate">수수료율 높은순</option>
+          <option value="amt">예상수수료 금액순</option>
+          <option value="plow">가격 낮은순</option>
+          <option value="phigh">가격 높은순</option>
+        </select>
+      </div>
+      <div id="scResult" style="margin-top:14px;"></div>
+    </div>
+  </div>
+ </div><!-- /tab-sc -->
 </div><!-- /wrap -->
+
+<!-- 인터랙티브 네이버 로그인 모달 -->
+<div class="il-modal" id="ilModal">
+  <div class="il-box">
+    <div class="il-bar"><b>네이버 로그인 <span id="ilAccName" style="color:var(--text3);font-weight:400;"></span></b>
+      <button class="il-x" onclick="scCloseLogin()">✕</button></div>
+    <div class="il-status" id="ilStatus">로그인 세션 시작 중…</div>
+    <div class="il-shot-wrap">
+      <div id="ilLoading">불러오는 중…</div>
+      <img id="ilShot" style="width:100%;display:block;cursor:crosshair;" tabindex="0" alt="">
+    </div>
+    <input id="ilKbd" placeholder="여기에 입력 (캡차·인증번호 등) — 위 화면 입력칸 먼저 클릭">
+  </div>
+</div>
 
 <div class="toast" id="toastEl"></div>
 
@@ -286,6 +372,154 @@ function _showVideoSaveOverlay(videoUrl){
     finally{ btn.disabled=false; btn.innerHTML=ot; }
   };
 })();
+
+// ════════════════════════════════════════════════════════════
+//  쇼핑커넥트 수수료 검색기
+// ════════════════════════════════════════════════════════════
+const SC_API = 'https://atrd.kr/api/sc';
+const _scq = id => document.getElementById(id);
+
+function scSwitchTab(t){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===t));
+  _scq('tab-download').style.display = t==='download' ? '' : 'none';
+  _scq('tab-sc').style.display = t==='sc' ? '' : 'none';
+  if(t==='sc') scRefreshAuth();
+}
+function scCookies(){ try{ return JSON.parse(localStorage.getItem('sc_cookies')||'null'); }catch(e){ return null; } }
+function scAff(){ return localStorage.getItem('sc_affid')||''; }
+function scRefreshAuth(){
+  const ck = scCookies(); const on = ck && ck.length;
+  _scq('scOut').style.display = on ? 'none' : '';
+  _scq('scIn').style.display  = on ? '' : 'none';
+  if(on) _scq('scAff').textContent = scAff()||'?';
+}
+
+// ── 인터랙티브 네이버 로그인 (서버 원격 브라우저 → 쿠키는 이 브라우저에 저장) ──
+var _il = { sid:null, poll:null, busy:false, vp:{width:1024,height:760} };
+async function scOpenLogin(){
+  _il.sid=null;
+  _scq('ilShot').src=''; _scq('ilLoading').style.display=''; _scq('ilKbd').value='';
+  _scq('ilStatus').textContent='로그인 세션 시작 중…';
+  _scq('ilModal').classList.add('open');
+  try{
+    const r = await fetch(SC_API+'/login/start', {method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:_scq('scId').value.trim(), password:_scq('scPw').value})});
+    const d = await r.json();
+    if(!d.sessionId) throw new Error(d.error||'세션 시작 실패');
+    _il.sid=d.sessionId; if(d.viewport) _il.vp=d.viewport;
+    if(_il.poll) clearInterval(_il.poll);
+    _il.poll=setInterval(_scTick,1200); _scTick();
+  }catch(e){ _scq('ilStatus').textContent='오류: '+e.message; }
+}
+async function _scTick(){
+  if(!_il.sid||_il.busy) return;
+  _il.busy=true;
+  try{
+    const r=await fetch(SC_API+'/login/'+_il.sid+'/shot');
+    const d=await r.json();
+    if(d.done){
+      _scStop();
+      if(d.success && d.cookies && d.cookies.length){
+        localStorage.setItem('sc_cookies', JSON.stringify(d.cookies));
+        if(d.affId) localStorage.setItem('sc_affid', d.affId);
+        toast('네이버 로그인 성공!', true);
+        scCloseLogin(); scRefreshAuth();
+        if(!d.affId) toast('브랜드커넥트 계정은 검색 시 자동확인됩니다');
+      } else {
+        _scq('ilStatus').textContent='로그인 실패: '+(d.error||'알 수 없음')+' — 닫고 다시 시도';
+      }
+      _il.busy=false; return;
+    }
+    if(d.png){ _scq('ilLoading').style.display='none'; _scq('ilShot').src='data:image/jpeg;base64,'+d.png; }
+    _scq('ilStatus').textContent='캡차·기기인증이 보이면 입력칸을 클릭한 뒤 아래 칸에 입력하세요 (자동 갱신 중)';
+  }catch(e){}
+  _il.busy=false;
+}
+function _scStop(){ if(_il.poll){ clearInterval(_il.poll); _il.poll=null; } }
+function scCloseLogin(){
+  _scStop();
+  if(_il.sid){ try{ fetch(SC_API+'/login/'+_il.sid+'/cancel',{method:'POST'}); }catch(e){} }
+  _il.sid=null; _scq('ilModal').classList.remove('open');
+}
+function _scPost(action, body){
+  if(!_il.sid) return;
+  fetch(SC_API+'/login/'+_il.sid+'/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})});
+}
+(function(){
+  const img=_scq('ilShot');
+  if(img) img.addEventListener('click',function(e){
+    if(!_il.sid) return;
+    const rect=img.getBoundingClientRect();
+    const x=Math.round((e.clientX-rect.left)*(_il.vp.width/rect.width));
+    const y=Math.round((e.clientY-rect.top)*(_il.vp.height/rect.height));
+    _scPost('click',{x:x,y:y});
+    const k=_scq('ilKbd'); if(k) k.focus();
+  });
+  const kbd=_scq('ilKbd');
+  if(kbd) kbd.addEventListener('keydown',function(e){
+    if(!_il.sid) return;
+    const special={Enter:'Enter',Backspace:'Backspace',Tab:'Tab',Delete:'Delete',ArrowLeft:'ArrowLeft',ArrowRight:'ArrowRight',ArrowUp:'ArrowUp',ArrowDown:'ArrowDown'};
+    if(special[e.key]){ e.preventDefault(); _scPost('key',{key:special[e.key]}); }
+    else if(e.key.length===1){ e.preventDefault(); _scPost('type',{text:e.key}); }
+  });
+})();
+
+// ── 검색 + 수수료 정렬 ──
+let _scProducts=[];
+function scSortProducts(){
+  const m=_scq('scSort').value, a=_scProducts.slice();
+  if(m==='rate') a.sort((x,y)=>(y.commission||0)-(x.commission||0));
+  else if(m==='amt') a.sort((x,y)=>(y.commissionPrice||0)-(x.commissionPrice||0));
+  else if(m==='plow') a.sort((x,y)=>(x.price||0)-(y.price||0));
+  else if(m==='phigh') a.sort((x,y)=>(y.price||0)-(x.price||0));
+  return a;
+}
+function scRender(){
+  const cont=_scq('scResult'), arr=scSortProducts(), won=n=>(n||0).toLocaleString('ko-KR');
+  if(!arr.length){ cont.innerHTML='<div class="cp-result">검색 결과가 없습니다.</div>'; return; }
+  cont.innerHTML='<div style="font-size:11px;color:var(--text2);margin-bottom:8px;">'+arr.length+'개</div>'+
+    arr.map(p=>'<div class="sc-card">'+
+      '<img src="'+(p.image||'')+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div class="scn">'+(p.name||'')+'</div>'+
+        '<div class="scmeta">'+won(p.price)+'원 · '+(p.store||'')+'</div>'+
+        '<div class="sc-row">'+
+          '<a class="sc-mini" href="'+(p.productUrl||'#')+'" target="_blank" rel="noopener">상품</a>'+
+          '<button class="sc-mini" onclick="scCopy(this.getAttribute(\'data-l\'))" data-l="'+(p.link||'')+'">제휴링크 복사</button>'+
+        '</div>'+
+      '</div>'+
+      '<div style="text-align:right;flex:0 0 auto;">'+
+        '<div class="sc-rate">'+(p.commission||0)+'%</div>'+
+        '<div class="scmeta">예상 '+won(p.commissionPrice)+'원</div>'+
+      '</div>'+
+    '</div>').join('');
+}
+function scCopy(t){ if(!t) return; navigator.clipboard?.writeText(t).then(()=>toast('제휴링크 복사됨',true),()=>toast('복사 실패')); }
+async function scDoSearch(){
+  const q=_scq('scQuery').value.trim();
+  if(!q){ toast('검색어를 입력하세요'); return; }
+  const ck=scCookies();
+  if(!ck){ toast('먼저 로그인하세요'); scRefreshAuth(); return; }
+  const btn=_scq('scSearchBtn'); btn.disabled=true; const o=btn.textContent; btn.innerHTML='<span class="spin"></span> 검색 중...';
+  _scq('scResult').innerHTML='';
+  try{
+    const r=await fetch(SC_API+'/search',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({cookies:ck, affId:scAff(), query:q})});
+    const d=await r.json();
+    if(r.status===401){ toast('세션 만료 — 다시 로그인'); localStorage.removeItem('sc_cookies'); scRefreshAuth(); return; }
+    if(d.error) throw new Error(d.error);
+    if(d.affId && d.affId!==scAff()) localStorage.setItem('sc_affid', d.affId);
+    _scProducts=d.products||[]; scRender();
+    toast(_scProducts.length+'개 검색됨', true);
+  }catch(e){ _scq('scResult').innerHTML='<div class="cp-result err">오류: '+e.message+'</div>'; }
+  finally{ btn.disabled=false; btn.innerHTML=o; }
+}
+_scq('scLoginBtn').onclick=scOpenLogin;
+_scq('scLogout').onclick=()=>{ localStorage.removeItem('sc_cookies'); localStorage.removeItem('sc_affid'); _scProducts=[]; _scq('scResult').innerHTML=''; scRefreshAuth(); toast('로그아웃됨'); };
+_scq('scSearchBtn').onclick=scDoSearch;
+_scq('scQuery').addEventListener('keydown',e=>{ if(e.key==='Enter') scDoSearch(); });
+_scq('scSort').addEventListener('change',scRender);
+scRefreshAuth();
 </script>
 </body>
 </html>
