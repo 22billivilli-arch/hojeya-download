@@ -127,26 +127,34 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
   border:1px solid var(--border2);border-radius:var(--r2);color:var(--text);font-size:13px;outline:none;}
 
 /* ── 검색기 결과 카드 ── */
+.sc-grid{display:grid;grid-template-columns:1fr;gap:8px;}
+/* 모바일: 가로 행(작은 썸네일 왼쪽) */
 .sc-card{display:flex;gap:10px;padding:10px;border:1px solid var(--border2);border-radius:var(--r2);
   background:var(--bg3);align-items:center;}
-.sc-grid{display:grid;grid-template-columns:1fr;gap:8px;}
-@media(min-width:700px){
-  .wrap{max-width:1100px;}
-  #tab-sc .cp-tab-wrap{max-width:1060px;}
-  .sc-grid{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));}
-  .sc-card{padding:13px;}
-  .sc-card img{width:86px;height:86px;}
-  .sc-card .scn{font-size:14px;max-height:44px;}
-  .sc-rate{font-size:20px;}
-  .sc-card .scmeta{font-size:12px;}
-}
-.sc-card img{width:58px;height:58px;border-radius:8px;object-fit:cover;background:var(--bg4);flex:0 0 auto;}
+.sc-thumb{position:relative;flex:0 0 auto;}
+.sc-thumb img{width:64px;height:64px;border-radius:8px;object-fit:cover;background:var(--bg4);display:block;}
+.sc-rate-badge{position:absolute;top:3px;left:3px;background:rgba(0,0,0,.62);color:var(--accent);
+  font-size:11px;font-weight:800;padding:1px 6px;border-radius:6px;}
+.sc-body{flex:1;min-width:0;}
 .sc-card .scn{font-size:12.5px;line-height:1.4;max-height:36px;overflow:hidden;}
-.sc-card .scmeta{font-size:11px;color:var(--text2);margin-top:3px;}
-.sc-rate{font-size:16px;font-weight:800;color:var(--accent);}
+.sc-card .scmeta{font-size:11px;color:var(--text2);margin-top:2px;}
 .sc-mini{padding:5px 9px;font-size:11px;border-radius:6px;border:1px solid var(--border2);
-  background:var(--bg4);color:var(--text);cursor:pointer;}
-.sc-row{display:flex;gap:6px;margin-top:6px;}
+  background:var(--bg4);color:var(--text);cursor:pointer;text-decoration:none;display:inline-block;}
+.sc-row{display:flex;gap:6px;margin-top:7px;}
+/* PC: 세로 카드 4열 + 큰 썸네일 */
+@media(min-width:700px){
+  .wrap{max-width:1280px;}
+  #tab-sc .cp-tab-wrap{max-width:1240px;}
+  .sc-grid{grid-template-columns:repeat(4,1fr);gap:14px;}
+  .sc-card{flex-direction:column;align-items:stretch;padding:0;gap:0;overflow:hidden;}
+  .sc-thumb{width:100%;}
+  .sc-thumb img{width:100%;height:auto;aspect-ratio:1/1;border-radius:0;}
+  .sc-rate-badge{font-size:15px;top:7px;left:7px;padding:2px 9px;}
+  .sc-body{padding:11px 12px 13px;}
+  .sc-card .scn{font-size:14px;max-height:42px;}
+  .sc-card .scmeta{font-size:12.5px;}
+  .sc-mini{font-size:12px;padding:7px 10px;}
+}
 </style>
 </head>
 <body>
@@ -503,18 +511,18 @@ function scRender(){
   cont.innerHTML='<div style="font-size:11px;color:var(--text2);margin-bottom:8px;">'+arr.length+'개</div>'+
     '<div class="sc-grid">'+
     arr.map(p=>'<div class="sc-card">'+
-      '<img src="'+(p.image||'')+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">'+
-      '<div style="flex:1;min-width:0;">'+
+      '<div class="sc-thumb">'+
+        '<img src="'+(p.image||'')+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">'+
+        '<span class="sc-rate-badge">수수료 '+(p.commission||0)+'%</span>'+
+      '</div>'+
+      '<div class="sc-body">'+
         '<div class="scn">'+(p.name||'')+'</div>'+
         '<div class="scmeta">'+won(p.price)+'원 · '+(p.store||'')+'</div>'+
+        '<div class="scmeta">예상수수료 '+won(p.commissionPrice)+'원</div>'+
         '<div class="sc-row">'+
           '<a class="sc-mini" href="'+(p.productUrl||'#')+'" target="_blank" rel="noopener">상품 열기</a>'+
-          '<button class="sc-mini" onclick="scIssue(this,\''+(p.id||'')+'\')">🔗 제휴링크 발급</button>'+
+          '<button class="sc-mini" onclick="scIssue(this,\''+(p.id||'')+'\')">🔗 발급</button>'+
         '</div>'+
-      '</div>'+
-      '<div style="text-align:right;flex:0 0 auto;">'+
-        '<div class="sc-rate">'+(p.commission||0)+'%</div>'+
-        '<div class="scmeta">예상 '+won(p.commissionPrice)+'원</div>'+
       '</div>'+
     '</div>').join('')+
     '</div>';
