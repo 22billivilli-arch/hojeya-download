@@ -128,7 +128,17 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 
 /* ── 검색기 결과 카드 ── */
 .sc-card{display:flex;gap:10px;padding:10px;border:1px solid var(--border2);border-radius:var(--r2);
-  background:var(--bg3);margin-bottom:8px;align-items:center;}
+  background:var(--bg3);align-items:center;}
+.sc-grid{display:grid;grid-template-columns:1fr;gap:8px;}
+@media(min-width:700px){
+  .cp-tab-wrap{max-width:1000px;}
+  .sc-grid{grid-template-columns:repeat(auto-fill,minmax(330px,1fr));}
+  .sc-card{padding:13px;}
+  .sc-card img{width:86px;height:86px;}
+  .sc-card .scn{font-size:14px;max-height:44px;}
+  .sc-rate{font-size:20px;}
+  .sc-card .scmeta{font-size:12px;}
+}
 .sc-card img{width:58px;height:58px;border-radius:8px;object-fit:cover;background:var(--bg4);flex:0 0 auto;}
 .sc-card .scn{font-size:12.5px;line-height:1.4;max-height:36px;overflow:hidden;}
 .sc-card .scmeta{font-size:11px;color:var(--text2);margin-top:3px;}
@@ -490,6 +500,7 @@ function scRender(){
   const cont=_scq('scResult'), arr=scSortProducts(), won=n=>(n||0).toLocaleString('ko-KR');
   if(!arr.length){ cont.innerHTML='<div class="cp-result">검색 결과가 없습니다.</div>'; return; }
   cont.innerHTML='<div style="font-size:11px;color:var(--text2);margin-bottom:8px;">'+arr.length+'개</div>'+
+    '<div class="sc-grid">'+
     arr.map(p=>'<div class="sc-card">'+
       '<img src="'+(p.image||'')+'" loading="lazy" onerror="this.style.visibility=\'hidden\'">'+
       '<div style="flex:1;min-width:0;">'+
@@ -504,7 +515,8 @@ function scRender(){
         '<div class="sc-rate">'+(p.commission||0)+'%</div>'+
         '<div class="scmeta">예상 '+won(p.commissionPrice)+'원</div>'+
       '</div>'+
-    '</div>').join('');
+    '</div>').join('')+
+    '</div>';
 }
 function scCopy(t){ if(!t) return; navigator.clipboard?.writeText(t).then(()=>toast('제휴링크 복사됨',true),()=>toast('복사 실패')); }
 async function scIssue(btn, id){
