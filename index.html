@@ -141,6 +141,8 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .sc-pricerow{margin-top:3px;}
 .sc-price{color:#ffcf5c;font-weight:800;font-size:13.5px;}      /* 판매가 — 골드 */
 .sc-store{color:var(--text2);font-size:11px;}
+.sc-rev{color:#5ab0ff;font-size:11px;font-weight:600;}
+.sc-star{color:#ffc94d;font-size:11px;font-weight:700;}
 .sc-commrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:3px;}
 .sc-earn{color:#4ea1ff;font-weight:700;font-size:12px;}          /* 예상수수료 — 블루 */
 .sc-comm{color:var(--accent);font-weight:800;font-size:13.5px;white-space:nowrap;}  /* 수수료율 — 그린(우측하단) */
@@ -528,7 +530,7 @@ function scRender(){
       '</div>'+
       '<div class="sc-body">'+
         '<div class="scn">'+(p.name||'')+'</div>'+
-        '<div class="sc-pricerow"><span class="sc-price">'+won(p.price)+'원</span><span class="sc-store"> · '+(p.store||'')+(p.reviewCount?' · 후기 '+won(p.reviewCount)+(p.rating?' ★'+p.rating:''):'')+'</span></div>'+
+        '<div class="sc-pricerow"><span class="sc-price">'+won(p.price)+'원</span><span class="sc-store"> · '+(p.store||'')+'</span>'+(p.reviewCount?'<span class="sc-rev"> · 후기 '+won(p.reviewCount)+'</span>'+(p.rating?'<span class="sc-star"> ★'+p.rating+'</span>':''):'')+'</div>'+
         '<div class="sc-commrow"><span class="sc-earn">예상수수료 '+won(p.commissionPrice)+'원</span><span class="sc-comm">수수료 '+(p.commission||0)+'%</span></div>'+
         '<div class="sc-row">'+
           '<a class="sc-mini" href="'+(p.productUrl||'#')+'" target="_blank" rel="noopener">상품 열기</a>'+
