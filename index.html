@@ -256,7 +256,11 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
       <div id="ilLoading">로그인 중…</div>
       <img id="ilShot" style="width:100%;display:block;cursor:crosshair;" tabindex="0" alt="">
     </div>
-    <input id="ilKbd" placeholder="여기에 입력 (아이디·비번·캡차) — 위 화면 입력칸 먼저 클릭">
+    <div style="font-size:11px;color:var(--text3);padding:6px 14px 0;line-height:1.5;">① 화면 속 정답 입력칸을 한 번 탭 → ② 아래에 정답 입력 → ③ <b>제출</b> 또는 Enter</div>
+    <div style="display:flex;gap:8px;padding:8px 14px 14px;">
+      <input id="ilKbd" style="flex:1;min-width:0;width:auto;margin:0;" placeholder="캡차 정답 입력 (숫자 등)">
+      <button id="ilSubmit" style="flex-shrink:0;padding:0 16px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-weight:700;font-size:13px;cursor:pointer;">제출</button>
+    </div>
   </div>
 </div>
 
@@ -587,6 +591,9 @@ function _scPost(action, body){
       if(e.key==='Enter'){ e.preventDefault(); _scPost('key',{key:'Enter'}); kbd.value=''; _last=''; }
     });
   }
+  // 제출 버튼: 네이버 로그인 버튼 클릭(캡차 정답 제출)
+  var sub=_scq('ilSubmit');
+  if(sub) sub.onclick=function(){ if(!_il.sid) return; _scPost('submit'); _scq('ilStatus').textContent='제출 중… 인증 확인 중입니다.'; };
 })();
 
 // ── 검색 + 수수료 정렬 ──
