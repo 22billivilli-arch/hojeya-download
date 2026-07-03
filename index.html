@@ -500,12 +500,27 @@ function _scPost(action, body){
     const k=_scq('ilKbd'); if(k) k.focus();
   });
   const kbd=_scq('ilKbd');
-  if(kbd) kbd.addEventListener('keydown',function(e){
-    if(!_il.sid) return;
-    const special={Enter:'Enter',Backspace:'Backspace',Tab:'Tab',Delete:'Delete',ArrowLeft:'ArrowLeft',ArrowRight:'ArrowRight',ArrowUp:'ArrowUp',ArrowDown:'ArrowDown'};
-    if(special[e.key]){ e.preventDefault(); _scPost('key',{key:special[e.key]}); }
-    else if(e.key.length===1){ e.preventDefault(); _scPost('type',{text:e.key}); }
-  });
+  if(kbd){
+    // IME(한글) 안전: keydown 글자당 전송은 PC 한글조합('Process')을 놓친다.
+    // → 입력값을 백엔드 필드와 diff 동기화(지운만큼 Backspace + 추가분 type).
+    let _last='';
+    function _syncKbd(){
+      if(!_il.sid) return;
+      const cur=kbd.value;
+      let i=0; const min=Math.min(cur.length,_last.length);
+      while(i<min && cur[i]===_last[i]) i++;
+      const del=_last.length-i, add=cur.slice(i);
+      for(let n=0;n<del;n++) _scPost('key',{key:'Backspace'});
+      if(add) _scPost('type',{text:add});
+      _last=cur;
+    }
+    kbd.addEventListener('input',function(e){ if(e.isComposing) return; _syncKbd(); });
+    kbd.addEventListener('compositionend', _syncKbd);
+    kbd.addEventListener('keydown',function(e){
+      if(!_il.sid) return;
+      if(e.key==='Enter'){ e.preventDefault(); _scPost('key',{key:'Enter'}); kbd.value=''; _last=''; }
+    });
+  }
 })();
 
 // ── 검색 + 수수료 정렬 ──
