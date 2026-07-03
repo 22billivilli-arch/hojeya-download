@@ -149,6 +149,12 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 .sc-mini{padding:5px 9px;font-size:11px;border-radius:6px;border:1px solid var(--border2);
   background:var(--bg4);color:var(--text);cursor:pointer;text-decoration:none;display:inline-block;}
 .sc-row{display:flex;gap:6px;margin-top:7px;}
+.sc-acct-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 6px 6px 11px;font-size:12px;font-weight:600;
+  border-radius:16px;border:1px solid var(--border2);background:var(--bg4);color:var(--text);cursor:pointer;}
+.sc-acct-chip.on{border-color:var(--accent);color:var(--accent);background:rgba(40,185,106,0.1);}
+.sc-acct-x{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;
+  font-size:10px;color:var(--text3);background:rgba(0,0,0,0.06);}
+.sc-acct-x:hover{color:var(--danger);background:rgba(255,0,0,0.1);}
 /* PC: 세로 카드 4열 + 큰 썸네일 */
 @media(min-width:700px){
   .wrap{max-width:1280px;}
@@ -205,6 +211,7 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
         본인 네이버 아이디로 로그인하면 <b>쇼핑커넥트 제휴상품을 수수료순으로</b> 검색할 수 있어요.<br>
         <span style="color:var(--text3);font-size:11px;">로그인 후 쿠키는 <b>이 브라우저에만</b> 저장돼요.</span>
       </div>
+      <div id="scSavedAccts" style="display:none;margin-top:14px;"></div>
       <div class="cp-label" style="margin-top:14px;">네이버 아이디</div>
       <input class="cp-input" id="scId" type="text" autocomplete="username" placeholder="네이버 아이디">
       <div class="cp-label" style="margin-top:10px;">비밀번호</div>
@@ -216,7 +223,8 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
     <!-- 로그인 상태: 검색 -->
     <div id="scIn" style="display:none;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-        <span style="font-size:12px;color:var(--accent);flex:1;">● 로그인됨 (AFF <span id="scAff"></span>)</span>
+        <span style="font-size:12px;color:var(--accent);flex:1;min-width:0;">● <b id="scActiveName" style="overflow:hidden;text-overflow:ellipsis;">로그인됨</b> <span style="color:var(--text3);">(AFF <span id="scAff"></span>)</span></span>
+        <button class="sc-mini" id="scSwitchAcct">계정 전환</button>
         <button class="sc-mini" id="scLogout">로그아웃</button>
       </div>
       <input class="cp-input" id="scQuery" type="text" placeholder="상품 키워드 (예: 무지외반증교정기, 선풍기)">
@@ -421,11 +429,57 @@ function scSwitchTab(t){
 }
 function scCookies(){ try{ return JSON.parse(localStorage.getItem('sc_cookies')||'null'); }catch(e){ return null; } }
 function scAff(){ return localStorage.getItem('sc_affid')||''; }
+function _scEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ── 계정별 쿠키 캐시(브라우저 저장) — 한 계정당 1회만 로그인, 이후 전환은 재로그인 없이(캡차 회피) ──
+function scAccounts(){ try{ return JSON.parse(localStorage.getItem('sc_accounts')||'[]'); }catch(e){ return []; } }
+function scActiveUser(){ return localStorage.getItem('sc_active')||''; }
+function scSaveAccount(username, cookies, affId){
+  var list = scAccounts().filter(function(a){ return a.username!==username; });
+  list.unshift({ username:username, cookies:cookies, affId:affId||'' });
+  localStorage.setItem('sc_accounts', JSON.stringify(list));
+}
+function scActivate(acc){
+  localStorage.setItem('sc_cookies', JSON.stringify(acc.cookies));
+  localStorage.setItem('sc_affid', acc.affId||'');
+  localStorage.setItem('sc_active', acc.username);
+  scRefreshAuth();
+}
+function scRemoveAccount(username){
+  localStorage.setItem('sc_accounts', JSON.stringify(scAccounts().filter(function(a){ return a.username!==username; })));
+  if(scActiveUser()===username){ localStorage.removeItem('sc_cookies'); localStorage.removeItem('sc_affid'); localStorage.removeItem('sc_active'); _scProducts=[]; _scq('scResult').innerHTML=''; }
+  scRefreshAuth();
+}
+// 세션 만료(401) 시 활성계정 캐시 무효화 → 재로그인(비번 재입력) 유도
+function scInvalidateActive(){
+  var u=scActiveUser();
+  if(u) localStorage.setItem('sc_accounts', JSON.stringify(scAccounts().filter(function(a){ return a.username!==u; })));
+  localStorage.removeItem('sc_cookies'); localStorage.removeItem('sc_affid'); localStorage.removeItem('sc_active');
+}
+// 로그인 상태에서도 계정 추가/전환 폼 보이기
+function scShowLoginForm(){ _scq('scOut').style.display=''; _scq('scIn').style.display='none'; _scRenderSavedAccts(); }
+function _scRenderSavedAccts(){
+  var box=_scq('scSavedAccts'); if(!box) return;
+  var list=scAccounts(), active=scActiveUser();
+  if(!list.length){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='';
+  box.innerHTML='<div class="cp-label" style="margin-top:0;">저장된 계정 · 클릭 시 재로그인 없이 전환</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:6px;">'+
+    list.map(function(a){
+      var on=a.username===active;
+      return '<span class="sc-acct-chip'+(on?' on':'')+'" data-u="'+encodeURIComponent(a.username)+'">'+
+        _scEsc(a.username)+'<span class="sc-acct-x" data-x="'+encodeURIComponent(a.username)+'" title="삭제">✕</span></span>';
+    }).join('')+'</div>';
+}
 function scRefreshAuth(){
   const ck = scCookies(); const on = ck && ck.length;
   _scq('scOut').style.display = on ? 'none' : '';
   _scq('scIn').style.display  = on ? '' : 'none';
-  if(on) _scq('scAff').textContent = scAff()||'?';
+  if(on){
+    _scq('scAff').textContent = scAff()||'?';
+    var u=scActiveUser(); if(u) _scq('scActiveName').textContent = u;
+  }
+  _scRenderSavedAccts();
 }
 
 // ── 네이버 로그인: 폼 자동로그인 시도 → 캡차/실패 시에만 모달 ──
@@ -433,7 +487,17 @@ var _il = { sid:null, poll:null, busy:false, ticks:0, modalShown:false, vp:{widt
 function _scLoginUI(on){ const b=_scq('scLoginBtn'), s=_scq('scLoginStatus'); b.disabled=on; s.style.display=on?'block':'none'; if(on) s.innerHTML='<span class="spin"></span> 로그인 중…'; }
 async function scLogin(){
   const id=_scq('scId').value.trim(), pw=_scq('scPw').value;
-  if(!id||!pw){ toast('아이디·비밀번호를 입력하세요'); return; }
+  if(!id){ toast('아이디를 입력하세요'); return; }
+  // 저장된 계정이면 재로그인(=새 로그인) 없이 쿠키 재사용 → 캡차 회피
+  const cached = scAccounts().find(function(a){ return a.username===id; });
+  if(cached && cached.cookies && cached.cookies.length){
+    scActivate(cached);
+    _scq('scId').value=''; _scq('scPw').value='';
+    toast('저장된 로그인 재사용 ✓', true);
+    return;
+  }
+  if(!pw){ toast('비밀번호를 입력하세요'); return; }
+  _il.pendingUser = id;
   _il.sid=null; _il.ticks=0; _il.modalShown=false;
   _scq('ilShot').src=''; _scq('ilLoading').style.display=''; _scq('ilKbd').value=''; _scq('ilStatus').textContent='';
   _scLoginUI(true);
@@ -462,10 +526,12 @@ async function _scTick(){
     if(d.done){
       _scStop();
       if(d.success && d.cookies && d.cookies.length){
-        localStorage.setItem('sc_cookies', JSON.stringify(d.cookies));
-        if(d.affId) localStorage.setItem('sc_affid', d.affId);
+        var user = _il.pendingUser || _scq('scId').value.trim();
+        scSaveAccount(user, d.cookies, d.affId||'');
+        scActivate({ username:user, cookies:d.cookies, affId:d.affId||'' });
+        _scq('scId').value=''; _scq('scPw').value='';
         _scq('ilModal').classList.remove('open'); _scLoginUI(false);
-        toast('로그인 성공!', true); scRefreshAuth();
+        toast('로그인 성공!', true);
       } else {
         if(!_il.modalShown) _scShowModal();
         _scq('ilStatus').textContent='로그인 실패: '+(d.error||'아이디·비번을 확인하세요');
@@ -565,7 +631,7 @@ async function scIssue(btn, id){
     const r=await fetch(SC_API+'/issue-link',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({cookies:ck, affId:scAff(), productId:id})});
     const d=await r.json();
-    if(r.status===401){ toast('세션 만료 — 다시 로그인'); localStorage.removeItem('sc_cookies'); scRefreshAuth(); return; }
+    if(r.status===401){ toast('세션 만료 — 다시 로그인'); scInvalidateActive(); scRefreshAuth(); return; }
     if(d.error||!d.url) throw new Error(d.error||'발급 실패');
     btn.textContent='✓ 발급완료'; btn.disabled=true;
     btn.style.color='var(--accent)'; btn.style.borderColor='var(--accent)';
@@ -583,7 +649,7 @@ async function scDoSearch(){
     const r=await fetch(SC_API+'/search',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({cookies:ck, affId:scAff(), query:q})});
     const d=await r.json();
-    if(r.status===401){ toast('세션 만료 — 다시 로그인'); localStorage.removeItem('sc_cookies'); scRefreshAuth(); return; }
+    if(r.status===401){ toast('세션 만료 — 다시 로그인'); scInvalidateActive(); scRefreshAuth(); return; }
     if(d.error) throw new Error(d.error);
     if(d.affId && d.affId!==scAff()) localStorage.setItem('sc_affid', d.affId);
     _scProducts=d.products||[]; scRender();
@@ -593,7 +659,16 @@ async function scDoSearch(){
 }
 _scq('scLoginBtn').onclick=scLogin;
 _scq('scPw').addEventListener('keydown',e=>{ if(e.key==='Enter') scLogin(); });
-_scq('scLogout').onclick=()=>{ localStorage.removeItem('sc_cookies'); localStorage.removeItem('sc_affid'); _scProducts=[]; _scq('scResult').innerHTML=''; scRefreshAuth(); toast('로그아웃됨'); };
+// 로그아웃: 현재 활성 세션만 해제(저장된 계정 목록은 유지 → 다음에 재로그인 없이 전환)
+_scq('scLogout').onclick=()=>{ localStorage.removeItem('sc_cookies'); localStorage.removeItem('sc_affid'); localStorage.removeItem('sc_active'); _scProducts=[]; _scq('scResult').innerHTML=''; scRefreshAuth(); toast('로그아웃됨'); };
+_scq('scSwitchAcct').onclick=scShowLoginForm;
+// 저장계정 칩: 클릭=전환(재로그인 없음), ✕=삭제
+_scq('scSavedAccts').addEventListener('click',function(e){
+  var x=e.target.closest('[data-x]');
+  if(x){ e.stopPropagation(); scRemoveAccount(decodeURIComponent(x.getAttribute('data-x'))); toast('계정 삭제됨'); return; }
+  var chip=e.target.closest('[data-u]');
+  if(chip){ var u=decodeURIComponent(chip.getAttribute('data-u')); var acc=scAccounts().find(function(a){ return a.username===u; }); if(acc){ scActivate(acc); _scProducts=[]; _scq('scResult').innerHTML=''; toast('전환: '+u, true); } }
+});
 _scq('scSearchBtn').onclick=scDoSearch;
 _scq('scQuery').addEventListener('keydown',e=>{ if(e.key==='Enter') scDoSearch(); });
 _scq('scSort').addEventListener('change',scRender);
