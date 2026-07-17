@@ -517,6 +517,12 @@ function scInvalidateActive(){
   if(u) localStorage.setItem('sc_accounts', JSON.stringify(scAccounts().filter(function(a){ return a.username!==u; })));
   localStorage.removeItem('sc_cookies'); localStorage.removeItem('sc_affid'); localStorage.removeItem('sc_active');
 }
+// 재로그인: 만료된 세션 정리 + 로그인 폼으로 이동/포커스
+function scReLogin(){
+  scInvalidateActive(); scRefreshAuth();
+  var el=_scq('scId'); if(el){ try{ el.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(function(){ el.focus(); }, 300); }catch(e){} }
+  toast('로그인이 만료됐어요. 다시 로그인해 주세요');
+}
 // 로그인 상태에서도 계정 추가/전환 폼 보이기
 function scShowLoginForm(){ _scq('scOut').style.display=''; _scq('scIn').style.display='none'; _scRenderSavedAccts(); }
 function _scRenderSavedAccts(){
@@ -666,7 +672,7 @@ function scSortProducts(){
 }
 function scRender(){
   const cont=_scq('scResult'), arr=scSortProducts(), won=n=>(n||0).toLocaleString('ko-KR');
-  if(!arr.length){ cont.innerHTML='<div class="cp-result">검색 결과가 없습니다.</div>'; return; }
+  if(!arr.length){ cont.innerHTML='<div class="cp-result">🔒 <b>로그인이 만료됐습니다.</b> 다시 로그인해 주세요.<div style="margin-top:10px"><button class="cp-btn" style="width:auto;padding:10px 20px;" onclick="scReLogin()">🔄 재로그인</button></div></div>'; return; }
   cont.innerHTML='<div style="font-size:11px;color:var(--text2);margin-bottom:8px;">'+arr.length+'개</div>'+
     '<div class="sc-grid">'+
     arr.map(p=>'<div class="sc-card">'+
