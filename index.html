@@ -360,13 +360,15 @@ async function dlMedia(url, filename){
   const isVideo = filename.endsWith('.mp4');
   const mime    = isVideo ? 'video/mp4' : 'image/jpeg';
   const isIOS   = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isMobile = isIOS || /Android/i.test(navigator.userAgent);
 
   const blob = await _fetchBlob(url);
   if(blob){
     const file = new File([blob], filename, {type: mime});
-    // iOS·안드로이드 모두 공유 시트로 → "갤러리/사진에 저장" 가능.
+    // 모바일(iOS·안드로이드)만 공유 시트로 → "갤러리/사진에 저장" 가능.
+    // PC(Windows 등)는 공유시트 대신 기존처럼 바로 파일 다운로드.
     // (안드로이드에서 <a download> 는 Downloads 폴더로만 가고 갤러리에 안 뜸)
-    if(navigator.canShare && navigator.canShare({files:[file]})){
+    if(isMobile && navigator.canShare && navigator.canShare({files:[file]})){
       try{ await navigator.share({files:[file], title: filename}); toast('저장 시트에서 갤러리/사진에 저장하세요', true); return; }
       catch(e){ if(e.name === 'AbortError') return; }
     }
