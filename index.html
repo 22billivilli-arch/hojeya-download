@@ -315,7 +315,8 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
         <span style="font-size:12px;color:var(--text2);flex:1;">추천 <b id="rhCnt2" style="color:var(--accent);">0</b>개 <span style="color:var(--text3);font-size:11px;">(연관 우선 · 관련 검색량순)</span></span>
         <button class="sc-mini" id="rhCopy2" onclick="recoHashCopyAll()">전체 복사</button>
       </div>
-      <div id="rhTags2" class="cp-result" style="margin-top:0;line-height:2;word-break:break-all;"></div>
+      <div id="rhTags2" class="cp-result" style="margin-top:0;line-height:2.1;word-break:break-all;"></div>
+      <div id="rhInfo2" style="margin-top:10px;font-size:12px;color:var(--text3);text-align:center;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;">👆 태그를 누르면 월검색량이 표시됩니다</div>
     </div>
   </div>
  </div><!-- /tab-hash -->
@@ -338,7 +339,8 @@ async function recoHashGo(){
     _rhTags2=(d.tags||[]);
     if(!_rhTags2.length){ err.textContent='클립 구좌가 있는 해시태그를 찾지 못했어요. 다른 키워드로 시도해보세요.'; err.style.display='block'; return; }
     document.getElementById('rhCnt2').textContent=_rhTags2.length;
-    document.getElementById('rhTags2').innerHTML=_rhTags2.map(function(x){ return '<span title="검색량 '+(x.vol||0).toLocaleString()+(x.pos?(' · 클립 '+x.pos+'번째'):'')+'" style="display:inline-block;margin:2px 4px 2px 0;color:var(--accent);font-weight:700;">'+_scEsc(x.tag)+'</span>'; }).join(' ');
+    document.getElementById('rhTags2').innerHTML=_rhTags2.map(function(x,i){ return '<span class="rh-chip" data-i="'+i+'" onclick="rhTapTag(this)" title="월검색량 '+(x.vol||0).toLocaleString()+(x.pos?(' · 클립 '+x.pos+'번째'):'')+'" style="display:inline-block;margin:3px 5px 3px 0;padding:3px 8px;background:var(--accent-dim);border:1px solid var(--border);border-radius:14px;color:var(--accent);font-weight:700;cursor:pointer;">'+_scEsc(x.tag)+'</span>'; }).join(' ');
+    var info=document.getElementById('rhInfo2'); if(info){ info.innerHTML='👆 태그를 누르면 월검색량이 표시됩니다'; }
     wrap.style.display='block';
   }catch(e){ err.textContent='오류: '+(e.name==='TimeoutError'?'시간초과(다시 시도)':e.message); err.style.display='block'; }
   finally{ btn.disabled=false; btn.textContent=o; }
@@ -349,7 +351,16 @@ function recoHashCopyAll(){
   var b=document.getElementById('rhCopy2');
   (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(function(){ var o=b.textContent; b.textContent='복사됨 ✓'; setTimeout(function(){b.textContent=o;},1200); },function(){ prompt('복사하세요', text); });
 }
+function rhTapTag(el){
+  var i=parseInt(el.getAttribute('data-i'),10); var x=_rhTags2[i]; if(!x) return;
+  var chips=document.querySelectorAll('#rhTags2 .rh-chip');
+  for(var k=0;k<chips.length;k++) chips[k].classList.remove('on');
+  el.classList.add('on');
+  var info=document.getElementById('rhInfo2');
+  if(info){ info.innerHTML='<b style="color:var(--accent);">'+_scEsc(x.tag)+'</b> · 월검색량 <b style="color:var(--text);font-size:14px;">'+(x.vol||0).toLocaleString()+'</b>'+(x.pos?(' · 클립 <b style="color:var(--text);">'+x.pos+'번째</b>'):' · <span style="color:var(--text3);">클립 구좌</span>'); }
+}
 </script>
+<style>#rhTags2 .rh-chip.on{ background:var(--accent) !important; color:#0b0b0a !important; border-color:var(--accent) !important; }</style>
 
 <!-- 인터랙티브 네이버 로그인 모달 -->
 <div class="il-modal" id="ilModal">
