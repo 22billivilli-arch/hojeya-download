@@ -922,13 +922,14 @@ function snExport(){
       <div class="upd-shot">
         <div class="upd-shot-cap">통합검색에 &lt;네이버 클립&gt; 구좌가 뜨는 키워드만 선별</div>
         <div class="mk-search"><span class="mk-n">N</span> 속눈썹펌</div>
-        <div class="mk-tabs">이미지 · 블로그 · <b>클립</b> · 카페 · 지식iN</div>
+        <div class="mk-tabs"><b>통합검색</b> · 블로그 · 클립 · 카페 · 지식iN · 이미지</div>
         <div class="mk-cliphead">네이버 클립 ⓘ</div>
         <div class="mk-clips"><div class="mk-clip"></div><div class="mk-clip"></div></div>
       </div>
       <p class="upd-step"><b>①</b> 해당 키워드의 <b>연관검색어</b>가 <b>최우선</b>으로 배열됩니다.</p>
       <div class="upd-shot">
         <div class="upd-shot-cap">연관검색어(검색창 자동완성)</div>
+        <div class="mk-search" style="margin-bottom:8px;"><span class="mk-n">N</span> 속눈썹펌</div>
         <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>주기</b></div>
         <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>키트</b></div>
         <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>주의사항</b></div>
@@ -945,9 +946,11 @@ function snExport(){
 <script>
 (function(){
   var KEY='hj_upd_recohash_v1';
-  function dismissed(){ try{ return localStorage.getItem(KEY)==='1'; }catch(e){ return false; } }
+  function hasCookie(){ try{ return document.cookie.indexOf(KEY+'=1')>=0; }catch(e){ return false; } }
+  function setCookie(){ try{ document.cookie=KEY+'=1; max-age=31536000; path=/'; }catch(e){} }
+  function dismissed(){ try{ if(localStorage.getItem(KEY)==='1') return true; }catch(e){} return hasCookie(); }
   window.updClose=function(){ var e=document.getElementById('updPop'); if(e)e.style.display='none'; };
-  window.updNever=function(){ try{ localStorage.setItem(KEY,'1'); }catch(e){} window.updClose(); };
+  window.updNever=function(){ try{ localStorage.setItem(KEY,'1'); }catch(e){} setCookie(); window.updClose(); };
   document.getElementById('updPop').addEventListener('click',function(ev){ if(ev.target===this) updClose(); });
   if(!dismissed()){ setTimeout(function(){ var e=document.getElementById('updPop'); if(e)e.style.display='flex'; }, 600); }
 })();
