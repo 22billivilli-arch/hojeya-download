@@ -216,8 +216,8 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
  <div id="tab-download">
   <div class="cp-tab-wrap">
     <div class="cp-head-row"><span class="cp-head-title">📥 영상 다운로드</span></div>
-    <div class="cp-label">틱톡 / 스레드 / 샤오홍슈 URL</div>
-    <input class="cp-input" id="_dlUrl" type="text" placeholder="틱톡·스레드·샤오홍슈 링크 붙여넣기" style="font-size:13px;">
+    <div class="cp-label">틱톡 / 스레드 / 샤오홍슈 / 도우인 URL</div>
+    <input class="cp-input" id="_dlUrl" type="text" placeholder="틱톡·스레드·샤오홍슈·도우인 링크 붙여넣기" style="font-size:13px;">
     <div style="display:flex;gap:8px;margin-top:10px;">
       <button class="cp-btn" id="_dlBtn" style="margin-top:0;flex:1;">가져오기</button>
       <button class="cp-btn" id="_dlClear" style="margin-top:0;flex:0 0 auto;width:auto;padding:12px 16px;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);">URL 지우기</button>
@@ -326,6 +326,8 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 const PROXY       = 'https://corsproxy.io/?';
 const MEDIA_PROXY = 'https://media-proxy.billivilli.workers.dev/?url=';
 const CP_THREADS_API = 'https://media-proxy.billivilli.workers.dev/threads-images';
+const CP_DOUYIN_API  = 'https://media-proxy.billivilli.workers.dev/douyin';
+const CP_CLIPDL_API  = 'https://atrd.kr/api/clipdl';
 
 // ── 토스트 ────────────────────────────────────────────────────────────────────
 let _toastTimer;
@@ -355,25 +357,66 @@ async function _fetchBlob(url){
 }
 
 // ── 미디어 저장 ───────────────────────────────────────────────────────────────
+// <a download> 로 바로 저장 (Download 폴더)
+function _directDownload(file, filename){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(file);
+  a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
+// 안드로이드: 기종마다 갤러리 저장 방식이 달라서 두 방법 다 제공
+function _androidSaveSheet(file, filename){
+  const canShare = !!(navigator.canShare && navigator.canShare({files:[file]}));
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;';
+  const sheet = document.createElement('div');
+  sheet.style.cssText = 'width:100%;max-width:480px;background:#fff;border-radius:18px 18px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px rgba(0,0,0,.2);';
+  sheet.innerHTML =
+    '<div style="text-align:center;font-weight:800;font-size:15px;margin-bottom:4px;">동영상 저장 방법 선택</div>' +
+    '<div style="text-align:center;font-size:12px;color:#888;margin-bottom:14px;">기종마다 저장 방식이 달라요.<br>한쪽이 안 되면 다른 버튼을 눌러보세요.</div>' +
+    (canShare ? '<button id="_acShare" style="width:100%;padding:14px;margin-bottom:8px;border:0;border-radius:12px;background:#4f46e5;color:#fff;font-size:15px;font-weight:800;">📥 갤러리에 저장 (공유)</button>' : '') +
+    '<button id="_acDl" style="width:100%;padding:14px;margin-bottom:6px;border:2px solid #4f46e5;border-radius:12px;background:#fff;color:#4f46e5;font-size:15px;font-weight:800;">⬇️ 바로 다운로드</button>' +
+    '<div style="text-align:center;font-size:11px;color:#aaa;margin:2px 0 12px;">※ 바로 다운로드 후 갤러리에 없으면 <b>파일앱 → Download 폴더</b> 확인</div>' +
+    '<button id="_acCancel" style="width:100%;padding:12px;border:0;border-radius:12px;background:#f1f1f4;color:#666;font-size:14px;font-weight:700;">닫기</button>';
+  ov.appendChild(sheet);
+  document.body.appendChild(ov);
+  const close = () => ov.remove();
+  ov.addEventListener('click', e => { if(e.target === ov) close(); });
+  sheet.querySelector('#_acCancel').onclick = close;
+  const shareBtn = sheet.querySelector('#_acShare');
+  if(shareBtn) shareBtn.onclick = async () => {
+    try{ await navigator.share({files:[file], title: filename}); toast('저장 시트에서 갤러리에 저장하세요', true); close(); }
+    catch(e){ if(e.name !== 'AbortError') toast('공유가 안 되면 바로 다운로드를 이용하세요'); }
+  };
+  sheet.querySelector('#_acDl').onclick = () => {
+    _directDownload(file, filename);
+    toast('다운로드 완료 ✓ (갤러리에 없으면 Download 폴더 확인)', true);
+    close();
+  };
+}
+
 async function dlMedia(url, filename){
   toast('다운로드 중...', true);
   const isVideo = filename.endsWith('.mp4');
   const mime    = isVideo ? 'video/mp4' : 'image/jpeg';
   const isIOS   = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isAndroid = /Android/i.test(navigator.userAgent);
 
   const blob = await _fetchBlob(url);
   if(blob){
     const file = new File([blob], filename, {type: mime});
-    if(isIOS && navigator.canShare?.({files:[file]})){
-      try{ await navigator.share({files:[file], title: filename}); return; }
+    // iOS: '사진' 앱이 표준이라 공유시트 하나로 확실 → 바로 공유
+    if(isIOS && navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title: filename}); toast('저장 시트에서 사진/동영상에 저장하세요', true); return; }
       catch(e){ if(e.name === 'AbortError') return; }
     }
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(file);
-    a.download = filename;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(a.href);
+    // 안드로이드: 기종마다 갈려서 두 방법 다 제공
+    if(isAndroid){ _androidSaveSheet(file, filename); return; }
+    // PC: 바로 다운로드
+    _directDownload(file, filename);
     toast('다운로드 완료 ✓', true);
     return;
   }
@@ -437,9 +480,13 @@ function _showVideoSaveOverlay(videoUrl){
         platform='샤오홍슈';
         const d=await (await fetch('https://cp-converter.vercel.app/api/xhs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url}),signal:AbortSignal.timeout(25000)})).json();
         if(d.error) throw new Error(d.error); videos=d.videos||[]; images=d.images||[];
+      } else if(/douyin\.com|iesdouyin|snssdk/i.test(url)){
+        platform='도우인';
+        const d=await (await fetch(CP_DOUYIN_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url}),signal:AbortSignal.timeout(30000)})).json();
+        if(d.error) throw new Error(d.error); videos=d.videos||[]; images=d.images||[];
       } else if(/naver\.me|m\.naver\.com\/shorts|clip\.naver\.com|tv\.naver\.com/i.test(url)){
         throw new Error('네이버 클립은 지원하지 않습니다');
-      } else { throw new Error('지원하지 않는 URL (틱톡/스레드/샤오홍슈)'); }
+      } else { throw new Error('지원하지 않는 URL (틱톡/스레드/샤오홍슈/도우인)'); }
       const total=videos.length+images.length;
       if(!total) throw new Error('미디어를 찾을 수 없습니다');
       const cont=q('_dlResult'); const ts=Date.now();
