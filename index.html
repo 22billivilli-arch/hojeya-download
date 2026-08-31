@@ -210,6 +210,7 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
   <button class="tab-btn active" data-tab="download" onclick="scSwitchTab('download')">📥 영상 다운로드</button>
   <button class="tab-btn" data-tab="sc" onclick="scSwitchTab('sc')">🛒 쇼핑커넥트 검색기</button>
   <button class="tab-btn" data-tab="senior" onclick="scSwitchTab('senior')">📋 시니어 니즈</button>
+  <button class="tab-btn" data-tab="hash" onclick="scSwitchTab('hash')">＃ 추천 해시태그</button>
 </div>
 
 <div class="wrap">
@@ -299,7 +300,56 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
     <div class="sn-hint">💡 셀을 누르면 복사돼요 (샤오홍슈·틱톡 검색용). 헤더 클릭 시 정렬.</div>
   </div>
  </div><!-- /tab-senior -->
+ <div id="tab-hash" style="display:none;">
+  <div class="cp-tab-wrap">
+    <div class="cp-head-row"><span class="cp-head-title">＃ 추천 해시태그</span></div>
+    <div class="cp-result" style="margin-top:0;font-size:12px;line-height:1.7;">
+      통합검색에 <b>클립 구좌가 있는 키워드</b>를 <b>연관키워드[우선]</b> - <b>관련키워드[검색량 높은순]</b>으로 나열됩니다.
+    </div>
+    <div class="cp-label" style="margin-top:14px;">키워드</div>
+    <input class="cp-input" id="rhKw2" type="text" placeholder="예: 기미크림" onkeydown="if(event.key==='Enter')recoHashGo()">
+    <button class="cp-btn" id="rhBtn2" onclick="recoHashGo()">추천 해시태그 생성</button>
+    <div id="rhErr2" style="display:none;margin-top:12px;" class="cp-result err"></div>
+    <div id="rhWrap2" style="display:none;margin-top:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:12px;color:var(--text2);flex:1;">추천 <b id="rhCnt2" style="color:var(--accent);">0</b>개 <span style="color:var(--text3);font-size:11px;">(연관 우선 · 관련 검색량순)</span></span>
+        <button class="sc-mini" id="rhCopy2" onclick="recoHashCopyAll()">전체 복사</button>
+      </div>
+      <div id="rhTags2" class="cp-result" style="margin-top:0;line-height:2;word-break:break-all;"></div>
+    </div>
+  </div>
+ </div><!-- /tab-hash -->
 </div><!-- /wrap -->
+<script>
+// ── 추천 해시태그 (atrd.kr=iwinv 백엔드 /api/reco-hashtags, 공개) ──
+var RECO_API = 'https://atrd.kr/api/reco-hashtags';
+var _rhTags2 = [];
+async function recoHashGo(){
+  var q=(document.getElementById('rhKw2').value||'').trim();
+  var err=document.getElementById('rhErr2'), wrap=document.getElementById('rhWrap2'), btn=document.getElementById('rhBtn2');
+  err.style.display='none';
+  if(!q){ err.textContent='키워드를 입력하세요'; err.style.display='block'; return; }
+  var o=btn.textContent; btn.disabled=true; btn.innerHTML='<span class="spin"></span> 생성 중… (클립 구좌 확인, 10~20초)';
+  wrap.style.display='none';
+  try{
+    var r=await fetch(RECO_API+'?q='+encodeURIComponent(q),{signal:AbortSignal.timeout(60000)});
+    var d=await r.json();
+    if(!r.ok||d.error) throw new Error(d.error||'생성 실패');
+    _rhTags2=(d.tags||[]);
+    if(!_rhTags2.length){ err.textContent='클립 구좌가 있는 해시태그를 찾지 못했어요. 다른 키워드로 시도해보세요.'; err.style.display='block'; return; }
+    document.getElementById('rhCnt2').textContent=_rhTags2.length;
+    document.getElementById('rhTags2').innerHTML=_rhTags2.map(function(x){ return '<span title="검색량 '+(x.vol||0).toLocaleString()+(x.pos?(' · 클립 '+x.pos+'번째'):'')+'" style="display:inline-block;margin:2px 4px 2px 0;color:var(--accent);font-weight:700;">'+_scEsc(x.tag)+'</span>'; }).join(' ');
+    wrap.style.display='block';
+  }catch(e){ err.textContent='오류: '+(e.name==='TimeoutError'?'시간초과(다시 시도)':e.message); err.style.display='block'; }
+  finally{ btn.disabled=false; btn.textContent=o; }
+}
+function recoHashCopyAll(){
+  if(!_rhTags2.length) return;
+  var text=_rhTags2.map(function(x){return x.tag;}).join(' ');
+  var b=document.getElementById('rhCopy2');
+  (navigator.clipboard?navigator.clipboard.writeText(text):Promise.reject()).then(function(){ var o=b.textContent; b.textContent='복사됨 ✓'; setTimeout(function(){b.textContent=o;},1200); },function(){ prompt('복사하세요', text); });
+}
+</script>
 
 <!-- 인터랙티브 네이버 로그인 모달 -->
 <div class="il-modal" id="ilModal">
@@ -534,6 +584,7 @@ function scSwitchTab(t){
   _scq('tab-download').style.display = t==='download' ? '' : 'none';
   _scq('tab-sc').style.display = t==='sc' ? '' : 'none';
   _scq('tab-senior').style.display = t==='senior' ? '' : 'none';
+  _scq('tab-hash').style.display = t==='hash' ? '' : 'none';
   if(t==='sc') scRefreshAuth();
   if(t==='senior') snInit();
 }
