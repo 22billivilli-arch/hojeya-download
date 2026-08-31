@@ -209,8 +209,8 @@ body{font-family:'Pretendard',-apple-system,sans-serif;background:var(--bg);colo
 <div class="tab-nav">
   <button class="tab-btn active" data-tab="download" onclick="scSwitchTab('download')">📥 영상 다운로드</button>
   <button class="tab-btn" data-tab="sc" onclick="scSwitchTab('sc')">🛒 쇼핑커넥트 검색기</button>
-  <button class="tab-btn" data-tab="senior" onclick="scSwitchTab('senior')">📋 시니어 니즈</button>
   <button class="tab-btn" data-tab="hash" onclick="scSwitchTab('hash')">＃ 추천 해시태그</button>
+  <button class="tab-btn" data-tab="senior" onclick="scSwitchTab('senior')">📋 시니어 니즈</button>
 </div>
 
 <div class="wrap">
@@ -884,6 +884,73 @@ function snExport(){
   var blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='시니어니즈_'+(_snPart.value||'전체')+'_'+_snFiltered.length+'건.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);toast('CSV '+_snFiltered.length+'건 내보냄',true);
 }
+</script>
+
+<!-- ── 신규 업데이트 안내 팝업 (추천 해시태그) ── -->
+<style>
+  #updPop{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:100000;display:none;align-items:center;justify-content:center;padding:16px;}
+  #updPop .upd-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;max-width:400px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.5);}
+  #updPop .upd-head{flex:0 0 auto;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:800;color:var(--text);padding:15px 16px;border-bottom:1px solid var(--border);}
+  #updPop .upd-x{margin-left:auto;cursor:pointer;color:var(--text3);font-size:15px;font-weight:400;}
+  #updPop .upd-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;}
+  #updPop .upd-lead{margin:0 0 12px;font-size:13.5px;line-height:1.65;color:var(--text);}
+  #updPop .upd-step{margin:14px 0 8px;font-size:13.5px;line-height:1.6;color:var(--text);}
+  #updPop .upd-step b:first-child{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;background:var(--accent);color:#0b0b0a;border-radius:50%;font-size:12px;margin-right:5px;}
+  #updPop b{color:var(--accent);}
+  #updPop .upd-shot{background:#fff;border:1px solid #e3e3e3;border-radius:10px;padding:10px 11px;margin:2px 0 4px;}
+  #updPop .upd-shot-cap{font-size:10.5px;color:#9a9a9a;margin-bottom:7px;font-weight:700;}
+  #updPop .mk-search{display:flex;align-items:center;gap:6px;background:#f1f3f4;border-radius:16px;padding:7px 11px;font-size:12.5px;color:#333;font-weight:600;}
+  #updPop .mk-n{color:#03c75a;font-weight:900;font-size:14px;}
+  #updPop .mk-tabs{font-size:11px;color:#888;margin:8px 2px 6px;}
+  #updPop .mk-tabs b{color:#03c75a;}
+  #updPop .mk-cliphead{font-size:12px;font-weight:800;color:#222;margin:6px 2px 6px;}
+  #updPop .mk-clips{display:flex;gap:7px;}
+  #updPop .mk-clip{flex:1;aspect-ratio:3/4;border-radius:8px;background:linear-gradient(135deg,#e9d6f5,#d6e4f5);}
+  #updPop .mk-ac{display:flex;align-items:center;gap:8px;padding:7px 2px;font-size:12.5px;color:#444;border-top:1px solid #f0f0f0;}
+  #updPop .mk-ac:first-of-type{border-top:none;}
+  #updPop .mk-ac span{color:#bbb;}
+  #updPop .mk-ac b{color:#111;font-weight:800;}
+  #updPop .upd-btns{flex:0 0 auto;display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);}
+  #updPop .upd-never{flex:1;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;}
+  #updPop .upd-ok{flex:1;background:var(--accent);color:#0b0b0a;border:none;border-radius:9px;padding:11px;font-size:13px;font-weight:800;cursor:pointer;}
+</style>
+<div id="updPop">
+  <div class="upd-box">
+    <div class="upd-head">🎉 신규 업데이트 · ＃추천 해시태그 <span class="upd-x" onclick="updClose()">✕</span></div>
+    <div class="upd-body">
+      <p class="upd-lead">키워드 검색 시, 네이버 <b>통합검색 페이지에 [클립 구좌]가 있는 키워드</b>만 선별해서 보여줍니다.</p>
+      <div class="upd-shot">
+        <div class="upd-shot-cap">통합검색에 &lt;네이버 클립&gt; 구좌가 뜨는 키워드만 선별</div>
+        <div class="mk-search"><span class="mk-n">N</span> 속눈썹펌</div>
+        <div class="mk-tabs">이미지 · 블로그 · <b>클립</b> · 카페 · 지식iN</div>
+        <div class="mk-cliphead">네이버 클립 ⓘ</div>
+        <div class="mk-clips"><div class="mk-clip"></div><div class="mk-clip"></div></div>
+      </div>
+      <p class="upd-step"><b>①</b> 해당 키워드의 <b>연관검색어</b>가 <b>최우선</b>으로 배열됩니다.</p>
+      <div class="upd-shot">
+        <div class="upd-shot-cap">연관검색어(검색창 자동완성)</div>
+        <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>주기</b></div>
+        <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>키트</b></div>
+        <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>주의사항</b></div>
+        <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>가격</b></div>
+      </div>
+      <p class="upd-step"><b>②</b> 그 다음은 <b>관련검색어 중 월검색량이 높은 순</b>으로 배열됩니다.</p>
+    </div>
+    <div class="upd-btns">
+      <button class="upd-never" onclick="updNever()">다시 보지 않기</button>
+      <button class="upd-ok" onclick="updClose()">확인</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY='hj_upd_recohash_v1';
+  function dismissed(){ try{ return localStorage.getItem(KEY)==='1'; }catch(e){ return false; } }
+  window.updClose=function(){ var e=document.getElementById('updPop'); if(e)e.style.display='none'; };
+  window.updNever=function(){ try{ localStorage.setItem(KEY,'1'); }catch(e){} window.updClose(); };
+  document.getElementById('updPop').addEventListener('click',function(ev){ if(ev.target===this) updClose(); });
+  if(!dismissed()){ setTimeout(function(){ var e=document.getElementById('updPop'); if(e)e.style.display='flex'; }, 600); }
+})();
 </script>
 </body>
 </html>
