@@ -899,73 +899,95 @@ function snExport(){
 }
 </script>
 
-<!-- ── 신규 업데이트 안내 팝업 (추천 해시태그) ── -->
+<!-- ── 서비스 종료 공지 팝업 (2026-09-12) ── -->
 <style>
-  #updPop{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:100000;display:none;align-items:center;justify-content:center;padding:16px;}
-  #updPop .upd-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;max-width:400px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.5);}
-  #updPop .upd-head{flex:0 0 auto;display:flex;align-items:center;gap:6px;font-size:15px;font-weight:800;color:var(--text);padding:15px 16px;border-bottom:1px solid var(--border);}
-  #updPop .upd-x{margin-left:auto;cursor:pointer;color:var(--text3);font-size:15px;font-weight:400;}
-  #updPop .upd-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px;}
-  #updPop .upd-lead{margin:0 0 12px;font-size:13.5px;line-height:1.65;color:var(--text);}
-  #updPop .upd-step{margin:14px 0 8px;font-size:13.5px;line-height:1.6;color:var(--text);}
-  #updPop .upd-step b:first-child{display:inline-block;width:20px;height:20px;line-height:20px;text-align:center;background:var(--accent);color:#0b0b0a;border-radius:50%;font-size:12px;margin-right:5px;}
-  #updPop b{color:var(--accent);}
-  #updPop .upd-shot{background:#fff;border:1px solid #e3e3e3;border-radius:10px;padding:10px 11px;margin:2px 0 4px;}
-  #updPop .upd-shot-cap{font-size:10.5px;color:#9a9a9a;margin-bottom:7px;font-weight:700;}
-  #updPop .mk-search{display:flex;align-items:center;gap:6px;background:#f1f3f4;border-radius:16px;padding:7px 11px;font-size:12.5px;color:#333;font-weight:600;}
-  #updPop .mk-n{color:#03c75a;font-weight:900;font-size:14px;}
-  #updPop .mk-tabs{font-size:11px;color:#888;margin:8px 2px 6px;}
-  #updPop .mk-tabs b{color:#03c75a;}
-  #updPop .mk-cliphead{font-size:12px;font-weight:800;color:#222;margin:6px 2px 6px;}
-  #updPop .mk-clips{display:flex;gap:7px;}
-  #updPop .mk-clip{flex:1;aspect-ratio:3/4;border-radius:8px;background:linear-gradient(135deg,#e9d6f5,#d6e4f5);}
-  #updPop .mk-ac{display:flex;align-items:center;gap:8px;padding:7px 2px;font-size:12.5px;color:#444;border-top:1px solid #f0f0f0;}
-  #updPop .mk-ac:first-of-type{border-top:none;}
-  #updPop .mk-ac span{color:#bbb;}
-  #updPop .mk-ac b{color:#111;font-weight:800;}
-  #updPop .upd-btns{flex:0 0 auto;display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border);}
-  #updPop .upd-never{flex:1;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;}
-  #updPop .upd-ok{flex:1;background:var(--accent);color:#0b0b0a;border:none;border-radius:9px;padding:11px;font-size:13px;font-weight:800;cursor:pointer;}
+  #endPop{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100000;display:none;align-items:center;justify-content:center;padding:16px;}
+  #endPop .ep-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;max-width:560px;width:100%;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 14px 46px rgba(0,0,0,.6);}
+  #endPop .ep-head{flex:0 0 auto;display:flex;align-items:center;gap:8px;font-size:19px;font-weight:800;color:var(--text);padding:17px 20px;border-bottom:1px solid var(--border);}
+  #endPop .ep-x{margin-left:auto;cursor:pointer;color:var(--text3);font-size:16px;font-weight:400;line-height:1;}
+  #endPop .ep-x:hover{color:var(--text2);}
+  #endPop .ep-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:24px 24px 10px;}
+  #endPop p{margin:0 0 19px;font-size:17.5px;line-height:1.82;color:var(--text);}
+  #endPop p.hi{background:var(--accent-dim);border:1px solid var(--accent-dim);border-left:4px solid var(--accent);border-radius:9px;padding:16px 18px;font-weight:700;}
+  #endPop b{color:var(--accent);font-weight:800;}
+  #endPop .ep-sign{margin:22px 0 4px;font-size:18.5px;font-weight:800;color:var(--text);line-height:1.7;}
+  #endPop .ep-links{flex:0 0 auto;padding:8px 20px 0;display:flex;flex-direction:column;gap:8px;}
+  #endPop .ep-dl,#endPop .ep-open{display:flex;align-items:center;justify-content:center;gap:7px;border-radius:10px;padding:16px;font-size:17px;font-weight:800;text-decoration:none;cursor:pointer;border:none;}
+  #endPop .ep-dl{background:var(--accent);color:#0b0b0a;}
+  #endPop .ep-open{background:var(--bg4);color:var(--text);border:1px solid var(--border2);}
+  #endPop .ep-hint{font-size:13.5px;color:var(--text3);text-align:center;margin:-2px 0 2px;line-height:1.5;}
+  #endPop .ep-btns{flex:0 0 auto;display:flex;gap:10px;padding:14px 20px;margin-top:10px;border-top:1px solid var(--border);}
+  #endPop .ep-never{flex:1;background:transparent;color:var(--text2);border:1px solid var(--border2);border-radius:10px;padding:14px;font-size:16px;font-weight:700;cursor:pointer;}
+  #endPop .ep-never:hover{color:var(--text);}
+  #endPop .ep-ok{flex:1;background:var(--bg4);color:var(--text);border:1px solid var(--border2);border-radius:10px;padding:14px;font-size:16px;font-weight:800;cursor:pointer;}
+  @media (max-width:480px){ #endPop .ep-body{padding:18px 16px 6px;} #endPop p{font-size:16px;line-height:1.78;} #endPop .ep-head{font-size:17px;padding:15px 16px;} #endPop .ep-sign{font-size:17px;} #endPop .ep-dl,#endPop .ep-open{font-size:15.5px;padding:14px;} }
 </style>
-<div id="updPop">
-  <div class="upd-box">
-    <div class="upd-head">🎉 신규 업데이트 · ＃추천 해시태그 <span class="upd-x" onclick="updClose()">✕</span></div>
-    <div class="upd-body">
-      <p class="upd-lead">키워드 검색 시, 네이버 <b>통합검색 페이지에 [클립 구좌]가 있는 키워드</b>만 선별해서 보여줍니다.</p>
-      <div class="upd-shot">
-        <div class="upd-shot-cap">통합검색에 &lt;네이버 클립&gt; 구좌가 뜨는 키워드만 선별</div>
-        <div class="mk-search"><span class="mk-n">N</span> 속눈썹펌</div>
-        <div class="mk-tabs"><b>통합검색</b> · 블로그 · 클립 · 카페 · 지식iN · 이미지</div>
-        <div class="mk-cliphead">네이버 클립 ⓘ</div>
-        <div class="mk-clips"><div class="mk-clip"></div><div class="mk-clip"></div></div>
-      </div>
-      <p class="upd-step"><b>①</b> 해당 키워드의 <b>연관검색어</b>가 <b>최우선</b>으로 배열됩니다.</p>
-      <div class="upd-shot">
-        <div class="upd-shot-cap">연관검색어(검색창 자동완성)</div>
-        <div class="mk-search" style="margin-bottom:8px;"><span class="mk-n">N</span> 속눈썹펌</div>
-        <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>주기</b></div>
-        <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>키트</b></div>
-        <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>주의사항</b></div>
-        <div class="mk-ac"><span>🔍</span> 속눈썹펌 <b>가격</b></div>
-      </div>
-      <p class="upd-step"><b>②</b> 그 다음은 <b>관련검색어 중 월검색량이 높은 순</b>으로 배열됩니다.</p>
+<div id="endPop">
+  <div class="ep-box">
+    <div class="ep-head">📢 서비스 종료 안내 <span class="ep-x" onclick="endClose()">✕</span></div>
+    <div class="ep-body">
+      <p><b>안녕하세요, 냐미쌤의 밤티 호제야입니다.</b></p>
+
+      <p>그동안 이용해 주셔서 정말 감사드립니다.</p>
+
+      <p>사실 이렇게까지 많이 써주실 줄 모르고<br>
+      대충 만든 건데,<br>
+      과분하게 써주셔서<br>
+      오히려 제가 더 감사하다는 말씀 드리고 싶네요.</p>
+
+      <p class="hi">호제야 다운받자는<br>
+      <b>9월 15일</b>을 끝으로 서비스를 종료합니다.</p>
+
+      <p>내 컴퓨터에서 바로 돌아가는 안전한 <b>춘식닷컴</b>에<br>
+      이제 모든 기능이 들어갔습니다.<br>
+      공개 서버에서 돌아가는 불완전한 호제야를<br>
+      굳이 쓰실 이유가 없어졌어요.</p>
+
+      <p>특히 <b>네이버는 로그인 기록에 아주 민감합니다.</b><br>
+      공개 서버를 거치는 것보다<br>
+      내 컴퓨터에서 직접 하시는 쪽이<br>
+      계정에 훨씬 안전합니다.</p>
+
+      <p>생각보다 많은 분들이 써주시는 바람에<br>
+      춘식조교님과 냐미쌤께서 여러분 안전을 위해<br>
+      계획에도 없던 기능을 부랴부랴 만드시느라<br>
+      고생 많으셨을 텐데,<br>
+      죄송스럽기도 하고 감사하기도 하네요 ^^</p>
+
+      <p>그러니 호제야는 이제 그만 잊으시고<br>
+      춘식닷컴 안에서 행복하세요.</p>
+
+      <p>저도 춘식닷컴으로 꿀 빨고 싶은데<br>
+      새로 배우는 게 쉽지가 않네요… ㅎ</p>
+
+      <p>여튼 호제야의 서비스 종료는<br>
+      다 여러분을 위한 거니까<br>
+      아쉬워 마시고, 감사 인사도 그만하시고,<br>
+      다들 <b>킵고잉</b> 아시죠~?</p>
+
+      <p class="ep-sign">다음 게릴라 강의에서 뵐게요, 다들!</p>
     </div>
-    <div class="upd-btns">
-      <button class="upd-never" onclick="updNever()">다시 보지 않기</button>
-      <button class="upd-ok" onclick="updClose()">확인</button>
+    <div class="ep-links">
+      <a class="ep-dl" href="https://chunsik.co.kr" target="_blank" rel="noopener">⬇ 춘식닷컴 다운로드</a>
+      <a class="ep-open" href="http://127.0.0.1:28765/" target="_blank" rel="noopener">🚀 춘식닷컴 바로열기</a>
+      <div class="ep-hint">바로열기는 춘식닷컴이 실행 중일 때만 열립니다</div>
+    </div>
+    <div class="ep-btns">
+      <button class="ep-never" onclick="endNever()">다시 보지 않기</button>
+      <button class="ep-ok" onclick="endClose()">확인</button>
     </div>
   </div>
 </div>
 <script>
 (function(){
-  var KEY='hj_upd_recohash_v1';
+  var KEY='hj_end_notice_v1';
   function hasCookie(){ try{ return document.cookie.indexOf(KEY+'=1')>=0; }catch(e){ return false; } }
   function setCookie(){ try{ document.cookie=KEY+'=1; max-age=31536000; path=/'; }catch(e){} }
   function dismissed(){ try{ if(localStorage.getItem(KEY)==='1') return true; }catch(e){} return hasCookie(); }
-  window.updClose=function(){ var e=document.getElementById('updPop'); if(e)e.style.display='none'; };
-  window.updNever=function(){ try{ localStorage.setItem(KEY,'1'); }catch(e){} setCookie(); window.updClose(); };
-  document.getElementById('updPop').addEventListener('click',function(ev){ if(ev.target===this) updClose(); });
-  if(!dismissed()){ setTimeout(function(){ var e=document.getElementById('updPop'); if(e)e.style.display='flex'; }, 600); }
+  window.endClose=function(){ var e=document.getElementById('endPop'); if(e)e.style.display='none'; };
+  window.endNever=function(){ try{ localStorage.setItem(KEY,'1'); }catch(e){} setCookie(); window.endClose(); };
+  document.getElementById('endPop').addEventListener('click',function(ev){ if(ev.target===this) endClose(); });
+  if(!dismissed()){ setTimeout(function(){ var e=document.getElementById('endPop'); if(e)e.style.display='flex'; }, 500); }
 })();
 </script>
 </body>
