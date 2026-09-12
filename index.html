@@ -2,6 +2,19 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<script>
+/* ── 서비스 종료 게이트 (2026-09-12 설치) ──
+   2026-09-16 00:00 KST(=09-15 15:00 UTC) 이후 접속은 종료 안내 페이지로 보낸다.
+   UTC 기준으로 비교하므로 보는 사람의 시간대·시계 설정과 무관하다. */
+(function () {
+  var HJ_END_AT = Date.UTC(2026, 8, 15, 15, 0, 0);   // 월은 0부터 → 8 = 9월
+  try {
+    if (Date.now() >= HJ_END_AT && location.pathname.indexOf('end.html') < 0) {
+      location.replace('end.html');
+    }
+  } catch (e) {}
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>호제야 다운받자</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
